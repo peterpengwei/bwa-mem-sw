@@ -15,13 +15,14 @@ module rbb #(parameter RBB_ADDR_WIDTH, RBB_DATA_WIDTH)
     clk,                              //              in    std_logic;  -- Core clock
     reset_n,                          //              in    std_logic;  -- Use SPARINGLY only for control
     // ---------------------------buffer r/w signals---------------------------------------------
-    request,
     task_done,
+    ReqValid,
+    ReqLineIdx,
+    ReqAck,
     WrEn, 	         			
     WrAddr,					
     WrDin,					
     Full, 					
-    RdEn, 					
     RdAddr,					
     RdDout,					
     Empty 					
@@ -30,14 +31,15 @@ module rbb #(parameter RBB_ADDR_WIDTH, RBB_DATA_WIDTH)
    input                        clk;                  //              in    std_logic;  -- Core clock
    input                        reset_n;              //              in    std_logic;  -- Use SPARINGLY only for control
 
-   output				request;
    input				task_done;
+   output				ReqValid;
+   output [RBB_ADDR_WIDTH-1:0]		ReqLineIdx;
+   input 				ReqAck;
    input 				WrEn;
    input [RBB_ADDR_WIDTH-1:0]		WrAddr;
    input [RBB_DATA_WIDTH-1:0]		WrDin;
    output 				Full;
 
-   input 				RdEn;
    input [RBB_ADDR_WIDTH-1:0]		RdAddr;
    output [RBB_DATA_WIDTH-1:0]		RdDout;
    output 				Empty;
@@ -47,7 +49,7 @@ module rbb #(parameter RBB_ADDR_WIDTH, RBB_DATA_WIDTH)
 
    localparam IDLE			'b01
    localparam WRITE			'b10
-   localparam NUM_LINES			'd16
+   localparam NUM_LINES			(1 << RBB_ADDR_WIDTH)
 
     //-------------------------
     //STATE_MACHINE
@@ -80,7 +82,7 @@ module rbb #(parameter RBB_ADDR_WIDTH, RBB_DATA_WIDTH)
 		end
                 WRITE:
 		begin
-			if (RdEn && rd_counter == NUM_LINES-1)
+			if (ReqAck && rd_counter == 'd(NUM_LINES-1))
 				next_state = IDLE;
 			else
 				next_state = WRITE;
@@ -95,27 +97,62 @@ module rbb #(parameter RBB_ADDR_WIDTH, RBB_DATA_WIDTH)
     //-------------------------
     //Output
     //-------------------------
+    reg [RBB_ADDR_WIDTH-1:0]		rd_counter_d;
+    reg [RBB_ADDR_WIDTH-1:0]		rd_counter;
     wire Full = (cur_state == WRITE);
     wire Empty = ~Full;
-    wire request = (cur_state == WRITE);
-    reg [NUM_LINES-1:0]		rd_counter_d;
-    reg [NUM_LINES-1:0]		rd_counter;
+    wire [RBB_ADDR_WIDTH-1:0] RdAddrBRAM = (cur_state == IDLE && next_state == WRITE) ? 'b0 : rd_counter + 'b1;
+    reg [RBB_ADDR_WIDTH-1:0] RdAddrBRAM_r;
+    always @ (posedge clk)
+    begin
+	    RdAddrBRAM_r <= RdAddrBRAM;
+    end
+    wire [RBB_DATA_WIDTH-1:0] RdDataBRAM;
+    wire ReqValid = (cur_state == WRITE);
+
+    reg [RBB_ADDR_WIDTH-1:0] ReqLineIdx;
+    reg [RBB_ADDR_WIDTH-1:0] ReqLineIdx_r;
+    reg [RBB_DATA_WIDTH-1:0] RdDout;
+    reg [RBB_DATA_WIDTH-1:0] RdDout_r;
+    reg task_done_r;
+    reg ReqAck_r;
+    always @ (posedge clk)
+    begin
+	    ReqLineIdx_r <= ReqLineIdx;
+	    RdDout_r <= RdDout;
+	    task_done_r <= task_done;
+	    ReqAck_r <= ReqAck;
+    end
+    always @ (*)
+    begin
+	    if (task_done_r || ReqAck_r)
+	    begin
+		    ReqLineIdx = RdAddrBRAM_r;
+		    RdDout = RdDataBRAM;
+	    end
+	    else
+	    begin
+		    ReqLineIdx = ReqLineIdx_r;
+		    RdDout = RdDout_r;
+	    end
+    end
+
     always @ (posedge clk)
     begin
 	    if (!reset_n)
 		    rd_counter <= 0;
 	    else
-		    rd_counter <= rd_counter_d + 1;
+		    rd_counter <= rd_counter_d;
     end
     always @ (*)
     begin
 	rd_counter_d = rd_counter;
-	if (cur_state == WRITE && RdEn) 
+	if (cur_state == WRITE && ReqAck) 
 	begin
-		if (rd_counter == NUM_LINES-1)
-			rd_counter_d = 0;
+		if (rd_counter == 'd(NUM_LINES-1))
+			rd_counter_d = 'b0;
 		else
-			rd_counter_d = rd_counter + 1;
+			rd_counter_d = rd_counter + 'b1;
 	end
     end
 
@@ -131,8 +168,8 @@ module rbb #(parameter RBB_ADDR_WIDTH, RBB_DATA_WIDTH)
                 .we   (WrEn),        
                 .waddr(WrAddr),     
                 .din  (WrDin),       
-                .raddr(RdAddr),     
-                .dout (RdDout)
+                .raddr(RdAddrBRAM),     
+                .dout (RdDataBRAM)
             );     
 
 endmodule
