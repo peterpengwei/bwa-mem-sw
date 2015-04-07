@@ -107,15 +107,15 @@
 // [127:0]   RO   AFU ID 
 
 module batch_manager #(parameter TBB_WR_ADDR_WIDTH=12, 
-				 TBB_WR_DATA_WIDTH=512, 
-				 TBB_RD_ADDR_WIDTH=16,
-				 TBB_RD_DATA_WIDTH=32,
-			 	 RBB_ADDR_WIDTH=8,	
-				 RBB_DATA_WIDTH=512, 
-				 NUM_PEA=4,
-				 TXHDR_WIDTH=61,
-				 RXHDR_WIDTH=61,
-				 DATA_WIDTH=512)
+    TBB_WR_DATA_WIDTH=512, 
+    TBB_RD_ADDR_WIDTH=16,
+    TBB_RD_DATA_WIDTH=32,
+    RBB_ADDR_WIDTH=8,  
+    RBB_DATA_WIDTH=512, 
+    NUM_PEA=4,
+    TXHDR_WIDTH=61,
+    RXHDR_WIDTH=61,
+    DATA_WIDTH=512)
 (
     // ---------------------------global signals-------------------------------------------------
     clk,                              //              in    std_logic;  -- Core clock
@@ -126,25 +126,25 @@ module batch_manager #(parameter TBB_WR_ADDR_WIDTH=12,
     rb2cf_C0RxWrValid,                //                     cci_intf:           Rx write response enable
     rb2cf_C0RxRdValid,                //                     cci_intf:           Rx read response enable
     rb2cf_C0RxCfgValid,               //                     cci_intf:           Rx config response enable
-    //rb2cf_C0RxUMsgValid,              //                     cci_intf:           Rx UMsg valid
-    //rb2cf_C0RxIntrValid,                //                     cci_intf:           Rx interrupt valid
+    //rb2cf_C0RxUMsgValid,            //                     cci_intf:           Rx UMsg valid
+    //rb2cf_C0RxIntrValid,            //                     cci_intf:           Rx interrupt valid
     rb2cf_C1RxHdr,                    // [RXHDR_WIDTH-1:0]   cci_intf:           Rx header to SPL channel 1
     rb2cf_C1RxWrValid,                //                     cci_intf:           Rx write response valid
-    //rb2cf_C1RxIntrValid,                //                     cci_intf:           Rx interrupt valid
+    //rb2cf_C1RxIntrValid,            //                     cci_intf:           Rx interrupt valid
 
     cf2ci_C0TxHdr,                    // [TXHDR_WIDTH-1:0]   cci_intf:           Tx Header from SPL channel 0
     cf2ci_C0TxRdValid,                //                     cci_intf:           Tx read request enable
     cf2ci_C1TxHdr,                    //                     cci_intf:           Tx Header from SPL channel 1
     cf2ci_C1TxData,                   //                     cci_intf:           Tx data from SPL
     cf2ci_C1TxWrValid,                //                     cci_intf:           Tx write request enable
-    //cf2ci_C1TxIntrValid,              //                     cci_intf:           Tx interrupt valid
+    //cf2ci_C1TxIntrValid,            //                     cci_intf:           Tx interrupt valid
     ci2cf_C0TxAlmFull,                //                     cci_intf:           Tx memory channel 0 almost full
     ci2cf_C1TxAlmFull,                //                     cci_intf:           TX memory channel 1 almost full
 
     ci2cf_InitDn,                     // Link initialization is complete
 
-    bm2pe_start_b,		// Start the task
-    pe2bm_done_b,		// Task done
+    bm2pe_start_b,                    // Start the task
+    pe2bm_done_b,                     // Task done
     pe2bm_rbbWrEn_b,
     pe2bm_rbbWrAddr_b,
     pe2bm_rbbWrDin_b,
@@ -160,30 +160,30 @@ module batch_manager #(parameter TBB_WR_ADDR_WIDTH=12,
    input                        rb2cf_C0RxWrValid;    //                  cci_intf:           write response enable
    input                        rb2cf_C0RxRdValid;    //                  cci_intf:           read response enable
    input                        rb2cf_C0RxCfgValid;   //                  cci_intf:           config response enable
-   //input                        rb2cf_C0RxUMsgValid;  //                  cci_intf:           Rx UMsg valid
-   //input                        rb2cf_C0RxIntrValid;    //                  cci_intf:           interrupt response enable
+   // input                        rb2cf_C0RxUMsgValid;  //                  cci_intf:           Rx UMsg valid
+   // input                        rb2cf_C0RxIntrValid;  //                  cci_intf:           interrupt response enable
    input [RXHDR_WIDTH-1:0]      rb2cf_C1RxHdr;        // [RXHDR_WIDTH-1:0]cci_intf:           Rx header to SPL channel 1
    input                        rb2cf_C1RxWrValid;    //                  cci_intf:           write response valid
-   //input                        rb2cf_C1RxIntrValid;    //                  cci_intf:           interrupt response valid
+   // input                        rb2cf_C1RxIntrValid;  //                  cci_intf:           interrupt response valid
 
    output [TXHDR_WIDTH-1:0]     cf2ci_C0TxHdr;        // [TXHDR_WIDTH-1:0]cci_intf:           Tx Header from SPL channel 0
    output                       cf2ci_C0TxRdValid;    //                  cci_intf:           Tx read request enable
    output [TXHDR_WIDTH-1:0]     cf2ci_C1TxHdr;        //                  cci_intf:           Tx Header from SPL channel 1
    output [DATA_WIDTH -1:0]     cf2ci_C1TxData;       //                  cci_intf:           Tx data from SPL
    output                       cf2ci_C1TxWrValid;    //                  cci_intf:           Tx write request enable
-   //output                       cf2ci_C1TxIntrValid;  //                  cci_intf:           Tx interrupt valid
+   // output                       cf2ci_C1TxIntrValid;  //                  cci_intf:           Tx interrupt valid
    input                        ci2cf_C0TxAlmFull;    //                  cci_intf:           Tx memory channel 0 almost full
    input                        ci2cf_C1TxAlmFull;    //                  cci_intf:           TX memory channel 1 almost full
    
    input                        ci2cf_InitDn;         //                  cci_intf:           Link initialization is complete
 
-   output [NUM_PEA-1:0]				bm2pe_start_b;
-   input [NUM_PEA-1:0]				pe2bm_done_b;
-   input [NUM_PEA-1:0]				pe2bm_rbbWrEn_b;
-   input [RBB_ADDR_WIDTH*NUM_PEA-1:0]		pe2bm_rbbWrAddr_b;
-   input [RBB_DATA_WIDTH*NUM_PEA-1:0]		pe2bm_rbbWrDin_b;
-   input [TBB_RD_ADDR_WIDTH*NUM_PEA-1:0]	pe2bm_tbbRdAddr_b;
-   output [TBB_RD_DATA_WIDTH*NUM_PEA-1:0]	bm2pe_tbbRdDout_b;
+   output [NUM_PEA-1:0]                     bm2pe_start_b;
+   input  [NUM_PEA-1:0]                     pe2bm_done_b;
+   input  [NUM_PEA-1:0]                     pe2bm_rbbWrEn_b;
+   input  [RBB_ADDR_WIDTH*NUM_PEA-1:0]      pe2bm_rbbWrAddr_b;
+   input  [RBB_DATA_WIDTH*NUM_PEA-1:0]      pe2bm_rbbWrDin_b;
+   input  [TBB_RD_ADDR_WIDTH*NUM_PEA-1:0]   pe2bm_tbbRdAddr_b;
+   output [TBB_RD_DATA_WIDTH*NUM_PEA-1:0]   bm2pe_tbbRdDout_b;
 
     //----------------------------------------------------------------------------------------------------------------------
     // NLB v1.1 AFU ID
@@ -220,7 +220,7 @@ module batch_manager #(parameter TBB_WR_ADDR_WIDTH=12,
     localparam      CSR_AFU_DSM_BASEH    = 16'h1a04;                 // WO - Upper 32-bits of AFU DSM base address.
     localparam      CSR_SRC_ADDR         = 16'h1a20;                 // WO   Reads are targetted to this region 
     localparam      CSR_DST_ADDR         = 16'h1a24;                 // WO   Writes are targetted to this region
-    localparam      CSR_NUM_BATCHES        = 16'h1a28;                 // WO   Numbers of task batches to be read/write
+    localparam      CSR_NUM_BATCHES      = 16'h1a28;                 // WO   Numbers of task batches to be read/write
     localparam      CSR_CTL              = 16'h1a2c;                 // WO   Control CSR to start n stop the test
     
     //----------------------------------------------------------------------------------
@@ -230,39 +230,39 @@ module batch_manager #(parameter TBB_WR_ADDR_WIDTH=12,
     //                                     Byte Offset                 Attribute    Width   Comments
     localparam      DSM_AFU_ID           = 32'h0;                   // RO           32b     non-zero value to uniquely identify the AFU
     localparam      DSM_STATUS           = 32'h40;                  // RO           512b    test status and error info
-    localparam      POINTER_WIDTH	 = NUM_PEA<=2 ? 1 : (NUM_PEA<=4 ? 2 : -1);
-    localparam	    RD_REQ_POINTER_WIDTH = 14 - TBB_WR_ADDR_WIDTH;
+    localparam      POINTER_WIDTH  = NUM_PEA<=2 ? 1 : (NUM_PEA<=4 ? 2 : -1);
+    localparam      RD_REQ_POINTER_WIDTH = 14 - TBB_WR_ADDR_WIDTH;
     
     //----------------------------------------------------------------------------------------------------------------------
   
-    reg  [NUM_PEA-1:0]				tbbWrEn_b;
-    reg  [TBB_WR_ADDR_WIDTH*NUM_PEA-1:0]	tbbWrAddr_b;
-    reg  [TBB_WR_DATA_WIDTH*NUM_PEA-1:0]	tbbWrDin_b;
-    wire [NUM_PEA-1:0]				tbbFull_b;
-    wire [TBB_RD_ADDR_WIDTH*NUM_PEA-1:0]	tbbRdAddr_b;
-    wire [TBB_RD_DATA_WIDTH*NUM_PEA-1:0]	tbbRdDout_b;
-    wire [NUM_PEA-1:0]				tbbEmpty_b;
-    wire [NUM_PEA-1:0]				tbbReqValid_b;
-    wire [NUM_PEA*TBB_WR_ADDR_WIDTH-1:0]	tbbReqLineIdx_b;
-    reg  [NUM_PEA-1:0]				tbbReqAck_b;
+    reg  [NUM_PEA-1:0]                      tbbWrEn_b;
+    reg  [TBB_WR_ADDR_WIDTH*NUM_PEA-1:0]    tbbWrAddr_b;
+    reg  [TBB_WR_DATA_WIDTH*NUM_PEA-1:0]    tbbWrDin_b;
+    wire [NUM_PEA-1:0]                      tbbFull_b;
+    wire [TBB_RD_ADDR_WIDTH*NUM_PEA-1:0]    tbbRdAddr_b;
+    wire [TBB_RD_DATA_WIDTH*NUM_PEA-1:0]    tbbRdDout_b;
+    wire [NUM_PEA-1:0]                      tbbEmpty_b;
+    wire [NUM_PEA-1:0]                      tbbReqValid_b;
+    wire [NUM_PEA*TBB_WR_ADDR_WIDTH-1:0]    tbbReqLineIdx_b;
+    reg  [NUM_PEA-1:0]                      tbbReqAck_b;
 
-    assign tbbRdAddr_b = pe2bm_tbbRdAddr_b;
-    assign bm2pe_tbbRdDout_b = tbbRdDout_b;
+    assign tbbRdAddr_b                    = pe2bm_tbbRdAddr_b;
+    assign bm2pe_tbbRdDout_b              = tbbRdDout_b;
 
-    wire [NUM_PEA-1:0]			rbbWrEn_b;
-    wire [RBB_ADDR_WIDTH*NUM_PEA-1:0]	rbbWrAddr_b;
-    wire [RBB_DATA_WIDTH*NUM_PEA-1:0]	rbbWrDin_b;
-    wire [NUM_PEA-1:0]			rbbFull_b;
-    wire [RBB_ADDR_WIDTH*NUM_PEA-1:0]	rbbRdAddr_b;
-    wire [RBB_DATA_WIDTH*NUM_PEA-1:0]	rbbRdDout_b;
-    wire [NUM_PEA-1:0]			rbbEmpty_b;
-    wire [NUM_PEA-1:0]			rbbReqValid_b;
-    wire [NUM_PEA*RBB_ADDR_WIDTH-1:0]	rbbReqLineIdx_b;
-    reg  [NUM_PEA-1:0]			rbbReqAck_b;
+    wire [NUM_PEA-1:0]                      rbbWrEn_b;
+    wire [RBB_ADDR_WIDTH*NUM_PEA-1:0]       rbbWrAddr_b;
+    wire [RBB_DATA_WIDTH*NUM_PEA-1:0]       rbbWrDin_b;
+    wire [NUM_PEA-1:0]                      rbbFull_b;
+    wire [RBB_ADDR_WIDTH*NUM_PEA-1:0]       rbbRdAddr_b;
+    wire [RBB_DATA_WIDTH*NUM_PEA-1:0]       rbbRdDout_b;
+    wire [NUM_PEA-1:0]                      rbbEmpty_b;
+    wire [NUM_PEA-1:0]                      rbbReqValid_b;
+    wire [NUM_PEA*RBB_ADDR_WIDTH-1:0]       rbbReqLineIdx_b;
+    reg  [NUM_PEA-1:0]                      rbbReqAck_b;
 
-    assign rbbWrEn_b = pe2bm_rbbWrEn_b;
-    assign rbbWrAddr_b = pe2bm_rbbWrAddr_b;
-    assign rbbWrDin_b = pe2bm_rbbWrDin_b;
+    assign rbbWrEn_b                      = pe2bm_rbbWrEn_b;
+    assign rbbWrAddr_b                    = pe2bm_rbbWrAddr_b;
+    assign rbbWrDin_b                     = pe2bm_rbbWrDin_b;
     
     reg  [DATA_WIDTH-1:0]   cf2ci_C1TxData;
     reg  [TXHDR_WIDTH-1:0]  cf2ci_C1TxHdr;
@@ -278,39 +278,39 @@ module batch_manager #(parameter TBB_WR_ADDR_WIDTH=12,
     reg   [31:0]            cr_dst_address;                         // a24h - destn buffer address
     reg   [31:0]            cr_num_batches;                         // a28h - Number of batches available for processing
     reg   [31:0]            cr_ctl = 0;                             // a2ch - control register to start and stop the test
-    wire                    test_go         = cr_ctl[1];                // When 0, it allows reconfiguration of test parameters.
+    wire                    test_go         = cr_ctl[1];            // When 0, it allows reconfiguration of test parameters.
 
     //register for storing number of task batches that get received
-    reg [31:0]			NumBatchesRecv;
-    reg [31:0]			NumBatchesRecv_d;
+    reg [31:0]      NumBatchesRecv;
+    reg [31:0]      NumBatchesRecv_d;
     //pointer to TBB
-    reg [POINTER_WIDTH-1:0]		tbb_pointer;
-    reg [POINTER_WIDTH-1:0]		tbb_pointer_d;
+    reg [POINTER_WIDTH-1:0]   tbb_pointer;
+    reg [POINTER_WIDTH-1:0]   tbb_pointer_d;
     //pointer to RBB
-    reg [POINTER_WIDTH-1:0]		rbb_pointer;
-    reg [POINTER_WIDTH-1:0]		rbb_pointer_d;
+    reg [POINTER_WIDTH-1:0]   rbb_pointer;
+    reg [POINTER_WIDTH-1:0]   rbb_pointer_d;
 
     //CCI Read Address Offset
-    reg [TBB_WR_ADDR_WIDTH-1:0]	RdAddrOffset;
-    reg [TBB_WR_ADDR_WIDTH-1:0]	RdAddrOffset_d;
+    reg [TBB_WR_ADDR_WIDTH-1:0] RdAddrOffset;
+    reg [TBB_WR_ADDR_WIDTH-1:0] RdAddrOffset_d;
     //CCI Read ID
-    reg [13:0]			RdReqId;
+    reg [13:0]      RdReqId;
     //CCI Read Type
-    wire [3:0]			rdreq_type = RdLine;
+    wire [3:0]      rdreq_type = RdLine;
 
     //CCI Write Address Offset
-    reg [RBB_ADDR_WIDTH-1:0]	WrAddrOffset;
-    reg [RBB_ADDR_WIDTH-1:0]	WrAddrOffset_d;
+    reg [RBB_ADDR_WIDTH-1:0]  WrAddrOffset;
+    reg [RBB_ADDR_WIDTH-1:0]  WrAddrOffset_d;
     //CCI Write ID
-    reg [13:0]			WrReqId;
+    reg [13:0]      WrReqId;
     //CCI Write Type
-    wire [3:0]			wrreq_type = WrLine;
+    wire [3:0]      wrreq_type = WrLine;
 
-    wire   [31:0]            ds_afuid_address = dsm_offset2addr(DSM_AFU_ID,cr_dsm_base);                        // 0h - afu id is written to this address
-    wire   [31:0]            ds_stat_address = dsm_offset2addr(DSM_STATUS,cr_dsm_base);                        // 40h - test status is written to this address
-    wire                     re2xy_go = test_go & afuid_updtd & ci2cf_InitDn;					// After initializing DSM, we can do actual tasks on AFU
-    reg			     WrHdr_valid;									// 1: Valid Write Request
-    reg			     RdHdr_valid;									// 1: Valid Read Request
+    wire   [31:0]            ds_afuid_address = dsm_offset2addr(DSM_AFU_ID,cr_dsm_base);          // 0h - afu id is written to this address
+    wire   [31:0]            ds_stat_address = dsm_offset2addr(DSM_STATUS,cr_dsm_base);           // 40h - test status is written to this address
+    wire                     re2xy_go = test_go & afuid_updtd & ci2cf_InitDn;         // After initializing DSM, we can do actual tasks on AFU
+    reg          WrHdr_valid;                 // 1: Valid Write Request
+    reg          RdHdr_valid;                 // 1: Valid Read Request
 
     //-------------------------
     //CSR Register Handling
@@ -322,13 +322,13 @@ module batch_manager #(parameter TBB_WR_ADDR_WIDTH=12,
             cr_dsm_base     <= DEF_DSM_BASE;
             cr_src_address  <= DEF_SRC_ADDR;
             cr_dst_address  <= DEF_DST_ADDR;
-	    cr_num_batches  <= 'b0;
+            cr_num_batches  <= 'b0;
             cr_ctl          <= 'b0;
             dsm_base_valid  <= 'b0;
         end
         else
-        begin                  
-	    //control register can be written anytime after resetting
+        begin  
+        //control register can be written anytime after resetting
             if(rb2cf_C0RxCfgValid)
                 case({rb2cf_C0RxHdr[13:0],2'b00})         /* synthesis parallel_case */
                     CSR_CTL          :   cr_ctl             <= rb2cf_C0RxData[31:0];
@@ -350,7 +350,7 @@ module batch_manager #(parameter TBB_WR_ADDR_WIDTH=12,
             begin
                 if(rb2cf_C0RxCfgValid)
                 case({rb2cf_C0RxHdr[13:0],2'b00})         /* synthesis parallel_case */
-		    //cr_num_batches corresponds to the number of task batches available for processing
+                    //cr_num_batches corresponds to the number of task batches available for processing
                     CSR_NUM_BATCHES:     cr_num_batches     <= cr_num_batches + 'b1;
                 endcase
             end
@@ -358,366 +358,367 @@ module batch_manager #(parameter TBB_WR_ADDR_WIDTH=12,
     end
 
     //-------------------------
-    //Round-Robin Load/Store
+    // Round-Robin Load/Store
     //-------------------------
 
-    //Sequential Logic
+    // Sequential Logic
     always @ (posedge clk) 
     begin
-	    if (!reset_n)
-	    begin
-		    NumBatchesRecv <= 'b0;
-		    tbb_pointer <= 'b0;
-		    rbb_pointer <= 'b0;
-		    RdAddrOffset <= 'b0;
-		    WrAddrOffset <= 'b0;
-	    end
-	    else
-	    begin
-		    NumBatchesRecv <= NumBatchesRecv_d;
-		    tbb_pointer <= tbb_pointer_d;
-		    rbb_pointer <= rbb_pointer_d;
-		    RdAddrOffset <= RdAddrOffset_d;
-		    WrAddrOffset <= WrAddrOffset_d;
-	    end
+        if (!reset_n)
+        begin
+            NumBatchesRecv  <= 'b0;
+            tbb_pointer     <= 'b0;
+            rbb_pointer     <= 'b0;
+            RdAddrOffset    <= 'b0;
+            WrAddrOffset    <= 'b0;
+        end
+        else
+        begin
+            NumBatchesRecv  <= NumBatchesRecv_d;
+            tbb_pointer     <= tbb_pointer_d;
+            rbb_pointer     <= rbb_pointer_d;
+            RdAddrOffset    <= RdAddrOffset_d;
+            WrAddrOffset    <= WrAddrOffset_d;
+        end
     end
 
-    //Combinatorial Logic
+    // Combinatorial Logic
     always @ (*) 
     begin
-	    tbb_pointer_d = tbb_pointer;
-	    rbb_pointer_d = rbb_pointer;
-	    RdAddrOffset_d = RdAddrOffset;
-	    WrAddrOffset_d = WrAddrOffset;
-	    NumBatchesRecv_d = NumBatchesRecv;
-	    RdHdr_valid = 'b0;
-	    WrHdr_valid = 'b0;
-	    tbbReqAck_b = 'b0;
-	    rbbReqAck_b = 'b0;
-	    RdReqId = 'b0;
-	    WrReqId = 'b0;
-	    if (re2xy_go) //During the real execution state, do the modification on these registers
-	    begin
-		    //tbb handler
-                    case(tbb_pointer)         /* synthesis parallel_case */
-			'b0:
-			begin
-		    	    //If current tbb is full, jump it without doing anything
-		    	    if (tbbFull_b[0])
-		    	    begin
-		    	            if (tbb_pointer == (NUM_PEA-1))
-		    	        	    tbb_pointer_d = 'b0;
-		    	            else
-		    	        	    tbb_pointer_d = tbb_pointer + 'b1;
-		    	    end
-		    	    //If tbb is not full, it can store a valid task
-		    	    //Then, check if there is a valid task to process
-		    	    else if (NumBatchesRecv != cr_num_batches)
-		    	    begin
-		    	            //We have at least one available batch to process
-		    	            //Then, check if the TBB is willing to read data
-		    	            if (tbbReqValid_b[0] && !ci2cf_C0TxAlmFull) //Not full, Available Batch, Request Valid and CCI not stalled, then just fetch data
-		    	            begin
-		    	        	    RdHdr_valid = 'b1; // a valid read request, 100% sent
-		    	        	    RdAddrOffset_d = RdAddrOffset + 'd64; // update address since the current one has been sent
-		    	        	    RdReqId[2+TBB_WR_ADDR_WIDTH-1:0] = {2'b0, tbbReqLineIdx_b[0*TBB_WR_ADDR_WIDTH+TBB_WR_ADDR_WIDTH-1:0*TBB_WR_ADDR_WIDTH]}; //Request ID is generated by combining the pointer and the line index
-		    	        	    tbbReqAck_b[0] = 'b1; // tell the TBB that the request has been sent to CCI
-		    	            end
-		    	            //if TBB is willing to read data but CCI is stalled, then do nothing
-		    	            else if (tbbReqValid_b[0])
-		    	            begin
-		    	        	    //do nothing
-		    	            end
-		    	            //if TBB is not willing to read data, then we can infer that the TBB has sent all the read requests
-		    	            //We can go to next TBB, and meanwhile claim that a batch has been received (since all the requests of a batch have been sent to CCI)
-		    	            else
-		    	            begin
-		    	        	    if (tbb_pointer == (NUM_PEA-1))
-		    	        		    tbb_pointer_d = 'b0;
-		    	        	    else
-		    	        		    tbb_pointer_d = tbb_pointer + 'b1;
-		    	        	    NumBatchesRecv_d = NumBatchesRecv + 'b1;
-		    	            end
-		    	    end
-			end
-			'b1:
-			begin
-		    	    //If current tbb is full, jump it without doing anything
-		    	    if (tbbFull_b[1])
-		    	    begin
-		    	            if (tbb_pointer == (NUM_PEA-1))
-		    	        	    tbb_pointer_d = 'b0;
-		    	            else
-		    	        	    tbb_pointer_d = tbb_pointer + 'b1;
-		    	    end
-		    	    //If tbb is not full, it can store a valid task
-		    	    //Then, check if there is a valid task to process
-		    	    else if (NumBatchesRecv != cr_num_batches)
-		    	    begin
-		    	            //We have at least one available batch to process
-		    	            //Then, check if the TBB is willing to read data
-		    	            if (tbbReqValid_b[1] && !ci2cf_C0TxAlmFull) //Not full, Available Batch, Request Valid and CCI not stalled, then just fetch data
-		    	            begin
-		    	        	    RdHdr_valid = 'b1; // a valid read request, 100% sent
-		    	        	    RdAddrOffset_d = RdAddrOffset + 'd64; // update address since the current one has been sent
-		    	        	    RdReqId[2+TBB_WR_ADDR_WIDTH-1:0] = {2'b1, tbbReqLineIdx_b[1*TBB_WR_ADDR_WIDTH+TBB_WR_ADDR_WIDTH-1:1*TBB_WR_ADDR_WIDTH]}; //Request ID is generated by combining the pointer and the line index
-		    	        	    tbbReqAck_b[1] = 'b1; // tell the TBB that the request has been sent to CCI
-		    	            end
-		    	            //if TBB is willing to read data but CCI is stalled, then do nothing
-		    	            else if (tbbReqValid_b[1])
-		    	            begin
-		    	        	    //do nothing
-		    	            end
-		    	            //if TBB is not willing to read data, then we can infer that the TBB has sent all the read requests
-		    	            //We can go to next TBB, and meanwhile claim that a batch has been received (since all the requests of a batch have been sent to CCI)
-		    	            else
-		    	            begin
-		    	        	    if (tbb_pointer == (NUM_PEA-1))
-		    	        		    tbb_pointer_d = 'b0;
-		    	        	    else
-		    	        		    tbb_pointer_d = tbb_pointer + 'b1;
-		    	        	    NumBatchesRecv_d = NumBatchesRecv + 'b1;
-		    	            end
-		    	    end
-			end
-			'b10:
-			begin
-		    	    //If current tbb is full, jump it without doing anything
-		    	    if (tbbFull_b[2])
-		    	    begin
-		    	            if (tbb_pointer == (NUM_PEA-1))
-		    	        	    tbb_pointer_d = 'b0;
-		    	            else
-		    	        	    tbb_pointer_d = tbb_pointer + 'b1;
-		    	    end
-		    	    //If tbb is not full, it can store a valid task
-		    	    //Then, check if there is a valid task to process
-		    	    else if (NumBatchesRecv != cr_num_batches)
-		    	    begin
-		    	            //We have at least one available batch to process
-		    	            //Then, check if the TBB is willing to read data
-		    	            if (tbbReqValid_b[2] && !ci2cf_C0TxAlmFull) //Not full, Available Batch, Request Valid and CCI not stalled, then just fetch data
-		    	            begin
-		    	        	    RdHdr_valid = 'b1; // a valid read request, 100% sent
-		    	        	    RdAddrOffset_d = RdAddrOffset + 'd64; // update address since the current one has been sent
-		    	        	    RdReqId[2+TBB_WR_ADDR_WIDTH-1:0] = {2'b10, tbbReqLineIdx_b[2*TBB_WR_ADDR_WIDTH+TBB_WR_ADDR_WIDTH-1:2*TBB_WR_ADDR_WIDTH]}; //Request ID is generated by combining the pointer and the line index
-		    	        	    tbbReqAck_b[2] = 'b1; // tell the TBB that the request has been sent to CCI
-		    	            end
-		    	            //if TBB is willing to read data but CCI is stalled, then do nothing
-		    	            else if (tbbReqValid_b[2])
-		    	            begin
-		    	        	    //do nothing
-		    	            end
-		    	            //if TBB is not willing to read data, then we can infer that the TBB has sent all the read requests
-		    	            //We can go to next TBB, and meanwhile claim that a batch has been received (since all the requests of a batch have been sent to CCI)
-		    	            else
-		    	            begin
-		    	        	    if (tbb_pointer == (NUM_PEA-1))
-		    	        		    tbb_pointer_d = 'b0;
-		    	        	    else
-		    	        		    tbb_pointer_d = tbb_pointer + 'b1;
-		    	        	    NumBatchesRecv_d = NumBatchesRecv + 'b1;
-		    	            end
-		    	    end
-			end
-			'b11:
-			begin
-		    	    //If current tbb is full, jump it without doing anything
-		    	    if (tbbFull_b[3])
-		    	    begin
-		    	            if (tbb_pointer == (NUM_PEA-1))
-		    	        	    tbb_pointer_d = 'b0;
-		    	            else
-		    	        	    tbb_pointer_d = tbb_pointer + 'b1;
-		    	    end
-		    	    //If tbb is not full, it can store a valid task
-		    	    //Then, check if there is a valid task to process
-		    	    else if (NumBatchesRecv != cr_num_batches)
-		    	    begin
-		    	            //We have at least one available batch to process
-		    	            //Then, check if the TBB is willing to read data
-		    	            if (tbbReqValid_b[3] && !ci2cf_C0TxAlmFull) //Not full, Available Batch, Request Valid and CCI not stalled, then just fetch data
-		    	            begin
-		    	        	    RdHdr_valid = 'b1; // a valid read request, 100% sent
-		    	        	    RdAddrOffset_d = RdAddrOffset + 'd64; // update address since the current one has been sent
-		    	        	    RdReqId[2+TBB_WR_ADDR_WIDTH-1:0] = {2'b11, tbbReqLineIdx_b[3*TBB_WR_ADDR_WIDTH+TBB_WR_ADDR_WIDTH-1:3*TBB_WR_ADDR_WIDTH]}; //Request ID is generated by combining the pointer and the line index
-		    	        	    tbbReqAck_b[3] = 'b1; // tell the TBB that the request has been sent to CCI
-		    	            end
-		    	            //if TBB is willing to read data but CCI is stalled, then do nothing
-		    	            else if (tbbReqValid_b[3])
-		    	            begin
-		    	        	    //do nothing
-		    	            end
-		    	            //if TBB is not willing to read data, then we can infer that the TBB has sent all the read requests
-		    	            //We can go to next TBB, and meanwhile claim that a batch has been received (since all the requests of a batch have been sent to CCI)
-		    	            else
-		    	            begin
-		    	        	    if (tbb_pointer == (NUM_PEA-1))
-		    	        		    tbb_pointer_d = 'b0;
-		    	        	    else
-		    	        		    tbb_pointer_d = tbb_pointer + 'b1;
-		    	        	    NumBatchesRecv_d = NumBatchesRecv + 'b1;
-		    	            end
-		    	    end
-			end
-                    endcase
+        tbb_pointer_d = tbb_pointer;
+        rbb_pointer_d = rbb_pointer;
+        RdAddrOffset_d = RdAddrOffset;
+        WrAddrOffset_d = WrAddrOffset;
+        NumBatchesRecv_d = NumBatchesRecv;
+        RdHdr_valid = 'b0;
+        WrHdr_valid = 'b0;
+        tbbReqAck_b = 'b0;
+        rbbReqAck_b = 'b0;
+        RdReqId = 'b0;
+        WrReqId = 'b0;
+      
+        if (re2xy_go) //During the real execution state, do the modification on these registers
+        begin
+            //tbb handler
+            case(tbb_pointer)         /* synthesis parallel_case */
+                'b0:
+                begin
+                    //If current tbb is full, jump it without doing anything
+                    if (tbbFull_b[0])
+                    begin
+                        if (tbb_pointer == (NUM_PEA-1))
+                            tbb_pointer_d = 'b0;
+                        else
+                            tbb_pointer_d = tbb_pointer + 'b1;
+                    end
+                    //If tbb is not full, it can store a valid task
+                    //Then, check if there is a valid task to process
+                    else if (NumBatchesRecv != cr_num_batches)
+                    begin
+                        //We have at least one available batch to process
+                        //Then, check if the TBB is willing to read data
+                        if (tbbReqValid_b[0] && !ci2cf_C0TxAlmFull) //Not full, Available Batch, Request Valid and CCI not stalled, then just fetch data
+                        begin
+                            RdHdr_valid = 'b1; // a valid read request, 100% sent
+                            RdAddrOffset_d = RdAddrOffset + 'd64; // update address since the current one has been sent
+                            RdReqId[2+TBB_WR_ADDR_WIDTH-1:0] = {2'b0, tbbReqLineIdx_b[0*TBB_WR_ADDR_WIDTH+TBB_WR_ADDR_WIDTH-1:0*TBB_WR_ADDR_WIDTH]}; //Request ID is generated by combining the pointer and the line index
+                            tbbReqAck_b[0] = 'b1; // tell the TBB that the request has been sent to CCI
+                        end
+                        //if TBB is willing to read data but CCI is stalled, then do nothing
+                        else if (tbbReqValid_b[0])
+                        begin
+                            //do nothing
+                        end
+                        //if TBB is not willing to read data, then we can infer that the TBB has sent all the read requests
+                        //We can go to next TBB, and meanwhile claim that a batch has been received (since all the requests of a batch have been sent to CCI)
+                        else
+                        begin
+                            if (tbb_pointer == (NUM_PEA-1))
+                                tbb_pointer_d = 'b0;
+                            else
+                                tbb_pointer_d = tbb_pointer + 'b1;
+                            NumBatchesRecv_d = NumBatchesRecv + 'b1;
+                        end
+                    end
+                end
+                'b1:
+                begin
+                    //If current tbb is full, jump it without doing anything
+                    if (tbbFull_b[1])
+                    begin
+                        if (tbb_pointer == (NUM_PEA-1))
+                            tbb_pointer_d = 'b0;
+                        else
+                            tbb_pointer_d = tbb_pointer + 'b1;
+                    end
+                    //If tbb is not full, it can store a valid task
+                    //Then, check if there is a valid task to process
+                    else if (NumBatchesRecv != cr_num_batches)
+                    begin
+                        //We have at least one available batch to process
+                        //Then, check if the TBB is willing to read data
+                        if (tbbReqValid_b[1] && !ci2cf_C0TxAlmFull) //Not full, Available Batch, Request Valid and CCI not stalled, then just fetch data
+                        begin
+                            RdHdr_valid = 'b1; // a valid read request, 100% sent
+                            RdAddrOffset_d = RdAddrOffset + 'd64; // update address since the current one has been sent
+                            RdReqId[2+TBB_WR_ADDR_WIDTH-1:0] = {2'b1, tbbReqLineIdx_b[1*TBB_WR_ADDR_WIDTH+TBB_WR_ADDR_WIDTH-1:1*TBB_WR_ADDR_WIDTH]}; //Request ID is generated by combining the pointer and the line index
+                            tbbReqAck_b[1] = 'b1; // tell the TBB that the request has been sent to CCI
+                        end
+                        //if TBB is willing to read data but CCI is stalled, then do nothing
+                        else if (tbbReqValid_b[1])
+                        begin
+                            //do nothing
+                        end
+                    //if TBB is not willing to read data, then we can infer that the TBB has sent all the read requests
+                    //We can go to next TBB, and meanwhile claim that a batch has been received (since all the requests of a batch have been sent to CCI)
+                        else
+                        begin
+                            if (tbb_pointer == (NUM_PEA-1))
+                                tbb_pointer_d = 'b0;
+                            else
+                                tbb_pointer_d = tbb_pointer + 'b1;
+                            NumBatchesRecv_d = NumBatchesRecv + 'b1;
+                        end
+                    end
+                end
+                'b10:
+                begin
+                    //If current tbb is full, jump it without doing anything
+                    if (tbbFull_b[2])
+                    begin
+                        if (tbb_pointer == (NUM_PEA-1))
+                            tbb_pointer_d = 'b0;
+                        else
+                            tbb_pointer_d = tbb_pointer + 'b1;
+                    end
+                    //If tbb is not full, it can store a valid task
+                    //Then, check if there is a valid task to process
+                    else if (NumBatchesRecv != cr_num_batches)
+                    begin
+                        //We have at least one available batch to process
+                        //Then, check if the TBB is willing to read data
+                        if (tbbReqValid_b[2] && !ci2cf_C0TxAlmFull) //Not full, Available Batch, Request Valid and CCI not stalled, then just fetch data
+                        begin
+                            RdHdr_valid = 'b1; // a valid read request, 100% sent
+                            RdAddrOffset_d = RdAddrOffset + 'd64; // update address since the current one has been sent
+                            RdReqId[2+TBB_WR_ADDR_WIDTH-1:0] = {2'b10, tbbReqLineIdx_b[2*TBB_WR_ADDR_WIDTH+TBB_WR_ADDR_WIDTH-1:2*TBB_WR_ADDR_WIDTH]}; //Request ID is generated by combining the pointer and the line index
+                            tbbReqAck_b[2] = 'b1; // tell the TBB that the request has been sent to CCI
+                        end
+                        //if TBB is willing to read data but CCI is stalled, then do nothing
+                        else if (tbbReqValid_b[2])
+                        begin
+                            //do nothing
+                        end
+                        //if TBB is not willing to read data, then we can infer that the TBB has sent all the read requests
+                        //We can go to next TBB, and meanwhile claim that a batch has been received (since all the requests of a batch have been sent to CCI)
+                        else
+                        begin
+                            if (tbb_pointer == (NUM_PEA-1))
+                                tbb_pointer_d = 'b0;
+                            else
+                                tbb_pointer_d = tbb_pointer + 'b1;
+                            NumBatchesRecv_d = NumBatchesRecv + 'b1;
+                        end
+                    end
+                end
+                'b11:
+                begin
+                    //If current tbb is full, jump it without doing anything
+                    if (tbbFull_b[3])
+                    begin
+                        if (tbb_pointer == (NUM_PEA-1))
+                            tbb_pointer_d = 'b0;
+                        else
+                            tbb_pointer_d = tbb_pointer + 'b1;
+                    end
+                    //If tbb is not full, it can store a valid task
+                    //Then, check if there is a valid task to process
+                    else if (NumBatchesRecv != cr_num_batches)
+                    begin
+                        //We have at least one available batch to process
+                        //Then, check if the TBB is willing to read data
+                        if (tbbReqValid_b[3] && !ci2cf_C0TxAlmFull) //Not full, Available Batch, Request Valid and CCI not stalled, then just fetch data
+                        begin
+                            RdHdr_valid = 'b1; // a valid read request, 100% sent
+                            RdAddrOffset_d = RdAddrOffset + 'd64; // update address since the current one has been sent
+                            RdReqId[2+TBB_WR_ADDR_WIDTH-1:0] = {2'b11, tbbReqLineIdx_b[3*TBB_WR_ADDR_WIDTH+TBB_WR_ADDR_WIDTH-1:3*TBB_WR_ADDR_WIDTH]}; //Request ID is generated by combining the pointer and the line index
+                            tbbReqAck_b[3] = 'b1; // tell the TBB that the request has been sent to CCI
+                        end
+                        //if TBB is willing to read data but CCI is stalled, then do nothing
+                        else if (tbbReqValid_b[3])
+                        begin
+                            //do nothing
+                        end
+                        //if TBB is not willing to read data, then we can infer that the TBB has sent all the read requests
+                        //We can go to next TBB, and meanwhile claim that a batch has been received (since all the requests of a batch have been sent to CCI)
+                        else
+                        begin
+                            if (tbb_pointer == (NUM_PEA-1))
+                                tbb_pointer_d = 'b0;
+                            else
+                                tbb_pointer_d = tbb_pointer + 'b1;
+                            NumBatchesRecv_d = NumBatchesRecv + 'b1;
+                        end
+                    end
+                end
+            endcase
 
-		    //rbb handler
-                    case(rbb_pointer)         /* synthesis parallel_case */
-			'b0:
-			begin
-		    	    //If current rbb is empty, jump it without doing anything
-		    	    if (rbbEmpty_b[0])
-		    	    begin
-		    	            if (rbb_pointer == (NUM_PEA-1))
-		    	        	    rbb_pointer_d = 'b0;
-		    	            else
-		    	        	    rbb_pointer_d = rbb_pointer + 'b1;
-		    	    end
-		    	    //If current rbb is not empty, we are able to send data back to CCI
-		    	    else
-		    	    begin
-		    	            //check if the RBB is willing to write data
-		    	            if (rbbReqValid_b[0] && !ci2cf_C1TxAlmFull) //Not empty, Request Valid and CCI not stalled, then just write back data
-		    	            begin
-		    	        	    WrHdr_valid = 'b1; // a valid write request, 100% sent
-		    	        	    WrAddrOffset_d = WrAddrOffset + 'd64; // update address since the current one has been sent
-		    	        	    WrReqId[2+RBB_ADDR_WIDTH-1:0] = {2'd0, rbbReqLineIdx_b[0*RBB_ADDR_WIDTH+RBB_ADDR_WIDTH-1:0*RBB_ADDR_WIDTH]}; //Request ID is generated by combining the pointer and the line index
-		    	        	    rbbReqAck_b[0] = 'b1; // tell the RBB that the request has been sent to CCI
-		    	            end
-		    	            //if RBB is willing to write data but CCI is stalled, then do nothing
-		    	            else if (rbbReqValid_b[0])
-		    	            begin
-		    	        	    //do nothing
-		    	            end
-		    	            //if RBB is not willing to write data, then we can infer that the RBB has sent all the write requests
-		    	            //We can go to next RBB, and meanwhile claim that a result batch has been sent back
-		    	            //Question: How to let CPU know it?
-		    	            else
-		    	            begin
-		    	        	    if (rbb_pointer == (NUM_PEA-1))
-		    	        		    rbb_pointer_d = 'b0;
-		    	        	    else
-		    	        		    rbb_pointer_d = rbb_pointer + 'b1;
-		    	            end
-		    	    end
-			end
-			'b1:
-			begin
-		    	    //If current rbb is empty, jump it without doing anything
-		    	    if (rbbEmpty_b[1])
-		    	    begin
-		    	            if (rbb_pointer == (NUM_PEA-1))
-		    	        	    rbb_pointer_d = 'b0;
-		    	            else
-		    	        	    rbb_pointer_d = rbb_pointer + 'b1;
-		    	    end
-		    	    //If current rbb is not empty, we are able to send data back to CCI
-		    	    else
-		    	    begin
-		    	            //check if the RBB is willing to write data
-		    	            if (rbbReqValid_b[1] && !ci2cf_C1TxAlmFull) //Not empty, Request Valid and CCI not stalled, then just write back data
-		    	            begin
-		    	        	    WrHdr_valid = 'b1; // a valid write request, 100% sent
-		    	        	    WrAddrOffset_d = WrAddrOffset + 'd64; // update address since the current one has been sent
-		    	        	    WrReqId[2+RBB_ADDR_WIDTH-1:0] = {2'd1, rbbReqLineIdx_b[1*RBB_ADDR_WIDTH+RBB_ADDR_WIDTH-1:1*RBB_ADDR_WIDTH]}; //Request ID is generated by combining the pointer and the line index
-		    	        	    rbbReqAck_b[1] = 'b1; // tell the RBB that the request has been sent to CCI
-		    	            end
-		    	            //if RBB is willing to write data but CCI is stalled, then do nothing
-		    	            else if (rbbReqValid_b[1])
-		    	            begin
-		    	        	    //do nothing
-		    	            end
-		    	            //if RBB is not willing to write data, then we can infer that the RBB has sent all the write requests
-		    	            //We can go to next RBB, and meanwhile claim that a result batch has been sent back
-		    	            //Question: How to let CPU know it?
-		    	            else
-		    	            begin
-		    	        	    if (rbb_pointer == (NUM_PEA-1))
-		    	        		    rbb_pointer_d = 'b0;
-		    	        	    else
-		    	        		    rbb_pointer_d = rbb_pointer + 'b1;
-		    	            end
-		    	    end
-			end
-			'b10:
-			begin
-		    	    //If current rbb is empty, jump it without doing anything
-		    	    if (rbbEmpty_b[2])
-		    	    begin
-		    	            if (rbb_pointer == (NUM_PEA-1))
-		    	        	    rbb_pointer_d = 'b0;
-		    	            else
-		    	        	    rbb_pointer_d = rbb_pointer + 'b1;
-		    	    end
-		    	    //If current rbb is not empty, we are able to send data back to CCI
-		    	    else
-		    	    begin
-		    	            //check if the RBB is willing to write data
-		    	            if (rbbReqValid_b[2] && !ci2cf_C1TxAlmFull) //Not empty, Request Valid and CCI not stalled, then just write back data
-		    	            begin
-		    	        	    WrHdr_valid = 'b1; // a valid write request, 100% sent
-		    	        	    WrAddrOffset_d = WrAddrOffset + 'd64; // update address since the current one has been sent
-		    	        	    WrReqId[2+RBB_ADDR_WIDTH-1:0] = {2'd2, rbbReqLineIdx_b[2*RBB_ADDR_WIDTH+RBB_ADDR_WIDTH-1:2*RBB_ADDR_WIDTH]}; //Request ID is generated by combining the pointer and the line index
-		    	        	    rbbReqAck_b[2] = 'b1; // tell the RBB that the request has been sent to CCI
-		    	            end
-		    	            //if RBB is willing to write data but CCI is stalled, then do nothing
-		    	            else if (rbbReqValid_b[2])
-		    	            begin
-		    	        	    //do nothing
-		    	            end
-		    	            //if RBB is not willing to write data, then we can infer that the RBB has sent all the write requests
-		    	            //We can go to next RBB, and meanwhile claim that a result batch has been sent back
-		    	            //Question: How to let CPU know it?
-		    	            else
-		    	            begin
-		    	        	    if (rbb_pointer == (NUM_PEA-1))
-		    	        		    rbb_pointer_d = 'b0;
-		    	        	    else
-		    	        		    rbb_pointer_d = rbb_pointer + 'b1;
-		    	            end
-		    	    end
-			end
-			'b11:
-			begin
-		    	    //If current rbb is empty, jump it without doing anything
-		    	    if (rbbEmpty_b[3])
-		    	    begin
-		    	            if (rbb_pointer == (NUM_PEA-1))
-		    	        	    rbb_pointer_d = 'b0;
-		    	            else
-		    	        	    rbb_pointer_d = rbb_pointer + 'b1;
-		    	    end
-		    	    //If current rbb is not empty, we are able to send data back to CCI
-		    	    else
-		    	    begin
-		    	            //check if the RBB is willing to write data
-		    	            if (rbbReqValid_b[3] && !ci2cf_C1TxAlmFull) //Not empty, Request Valid and CCI not stalled, then just write back data
-		    	            begin
-		    	        	    WrHdr_valid = 'b1; // a valid write request, 100% sent
-		    	        	    WrAddrOffset_d = WrAddrOffset + 'd64; // update address since the current one has been sent
-		    	        	    WrReqId[2+RBB_ADDR_WIDTH-1:0] = {2'd3, rbbReqLineIdx_b[3*RBB_ADDR_WIDTH+RBB_ADDR_WIDTH-1:3*RBB_ADDR_WIDTH]}; //Request ID is generated by combining the pointer and the line index
-		    	        	    rbbReqAck_b[3] = 'b1; // tell the RBB that the request has been sent to CCI
-		    	            end
-		    	            //if RBB is willing to write data but CCI is stalled, then do nothing
-		    	            else if (rbbReqValid_b[3])
-		    	            begin
-		    	        	    //do nothing
-		    	            end
-		    	            //if RBB is not willing to write data, then we can infer that the RBB has sent all the write requests
-		    	            //We can go to next RBB, and meanwhile claim that a result batch has been sent back
-		    	            //Question: How to let CPU know it?
-		    	            else
-		    	            begin
-		    	        	    if (rbb_pointer == (NUM_PEA-1))
-		    	        		    rbb_pointer_d = 'b0;
-		    	        	    else
-		    	        		    rbb_pointer_d = rbb_pointer + 'b1;
-		    	            end
-		    	    end
-			end
-		    endcase
-	    end
+            //rbb handler
+            case(rbb_pointer)         /* synthesis parallel_case */
+                'b0:
+                begin
+                    //If current rbb is empty, jump it without doing anything
+                    if (rbbEmpty_b[0])
+                    begin
+                        if (rbb_pointer == (NUM_PEA-1))
+                            rbb_pointer_d = 'b0;
+                        else
+                            rbb_pointer_d = rbb_pointer + 'b1;
+                    end
+                    //If current rbb is not empty, we are able to send data back to CCI
+                    else
+                    begin
+                      //check if the RBB is willing to write data
+                        if (rbbReqValid_b[0] && !ci2cf_C1TxAlmFull) //Not empty, Request Valid and CCI not stalled, then just write back data
+                        begin
+                            WrHdr_valid = 'b1; // a valid write request, 100% sent
+                            WrAddrOffset_d = WrAddrOffset + 'd64; // update address since the current one has been sent
+                            WrReqId[2+RBB_ADDR_WIDTH-1:0] = {2'd0, rbbReqLineIdx_b[0*RBB_ADDR_WIDTH+RBB_ADDR_WIDTH-1:0*RBB_ADDR_WIDTH]}; //Request ID is generated by combining the pointer and the line index
+                            rbbReqAck_b[0] = 'b1; // tell the RBB that the request has been sent to CCI
+                        end
+                        //if RBB is willing to write data but CCI is stalled, then do nothing
+                        else if (rbbReqValid_b[0])
+                        begin
+                            //do nothing
+                        end
+                        //if RBB is not willing to write data, then we can infer that the RBB has sent all the write requests
+                        //We can go to next RBB, and meanwhile claim that a result batch has been sent back
+                        //Question: How to let CPU know it?
+                        else
+                        begin
+                            if (rbb_pointer == (NUM_PEA-1))
+                                rbb_pointer_d = 'b0;
+                            else
+                                rbb_pointer_d = rbb_pointer + 'b1;
+                        end
+                    end
+                end
+                'b1:
+                begin
+                    //If current rbb is empty, jump it without doing anything
+                    if (rbbEmpty_b[1])
+                    begin
+                        if (rbb_pointer == (NUM_PEA-1))
+                            rbb_pointer_d = 'b0;
+                        else
+                            rbb_pointer_d = rbb_pointer + 'b1;
+                    end
+                    //If current rbb is not empty, we are able to send data back to CCI
+                    else
+                    begin
+                        //check if the RBB is willing to write data
+                        if (rbbReqValid_b[1] && !ci2cf_C1TxAlmFull) //Not empty, Request Valid and CCI not stalled, then just write back data
+                        begin
+                            WrHdr_valid = 'b1; // a valid write request, 100% sent
+                            WrAddrOffset_d = WrAddrOffset + 'd64; // update address since the current one has been sent
+                            WrReqId[2+RBB_ADDR_WIDTH-1:0] = {2'd1, rbbReqLineIdx_b[1*RBB_ADDR_WIDTH+RBB_ADDR_WIDTH-1:1*RBB_ADDR_WIDTH]}; //Request ID is generated by combining the pointer and the line index
+                            rbbReqAck_b[1] = 'b1; // tell the RBB that the request has been sent to CCI
+                        end
+                        //if RBB is willing to write data but CCI is stalled, then do nothing
+                        else if (rbbReqValid_b[1])
+                        begin
+                            //do nothing
+                        end
+                        //if RBB is not willing to write data, then we can infer that the RBB has sent all the write requests
+                        //We can go to next RBB, and meanwhile claim that a result batch has been sent back
+                        //Question: How to let CPU know it?
+                        else
+                        begin
+                            if (rbb_pointer == (NUM_PEA-1))
+                                rbb_pointer_d = 'b0;
+                            else
+                                rbb_pointer_d = rbb_pointer + 'b1;
+                        end
+                    end
+                end
+                'b10:
+                begin
+                    //If current rbb is empty, jump it without doing anything
+                    if (rbbEmpty_b[2])
+                    begin
+                        if (rbb_pointer == (NUM_PEA-1))
+                            rbb_pointer_d = 'b0;
+                        else
+                            rbb_pointer_d = rbb_pointer + 'b1;
+                    end
+                    //If current rbb is not empty, we are able to send data back to CCI
+                    else
+                    begin
+                        //check if the RBB is willing to write data
+                        if (rbbReqValid_b[2] && !ci2cf_C1TxAlmFull) //Not empty, Request Valid and CCI not stalled, then just write back data
+                        begin
+                            WrHdr_valid = 'b1; // a valid write request, 100% sent
+                            WrAddrOffset_d = WrAddrOffset + 'd64; // update address since the current one has been sent
+                            WrReqId[2+RBB_ADDR_WIDTH-1:0] = {2'd2, rbbReqLineIdx_b[2*RBB_ADDR_WIDTH+RBB_ADDR_WIDTH-1:2*RBB_ADDR_WIDTH]}; //Request ID is generated by combining the pointer and the line index
+                            rbbReqAck_b[2] = 'b1; // tell the RBB that the request has been sent to CCI
+                        end
+                        //if RBB is willing to write data but CCI is stalled, then do nothing
+                        else if (rbbReqValid_b[2])
+                        begin
+                            //do nothing
+                        end
+                        //if RBB is not willing to write data, then we can infer that the RBB has sent all the write requests
+                        //We can go to next RBB, and meanwhile claim that a result batch has been sent back
+                        //Question: How to let CPU know it?
+                        else
+                        begin
+                        if (rbb_pointer == (NUM_PEA-1))
+                            rbb_pointer_d = 'b0;
+                        else
+                            rbb_pointer_d = rbb_pointer + 'b1;
+                        end
+                    end
+                end
+                'b11:
+                begin
+                    //If current rbb is empty, jump it without doing anything
+                    if (rbbEmpty_b[3])
+                    begin
+                        if (rbb_pointer == (NUM_PEA-1))
+                            rbb_pointer_d = 'b0;
+                        else
+                            rbb_pointer_d = rbb_pointer + 'b1;
+                    end
+                    //If current rbb is not empty, we are able to send data back to CCI
+                    else
+                    begin
+                        //check if the RBB is willing to write data
+                        if (rbbReqValid_b[3] && !ci2cf_C1TxAlmFull) //Not empty, Request Valid and CCI not stalled, then just write back data
+                        begin
+                            WrHdr_valid = 'b1; // a valid write request, 100% sent
+                            WrAddrOffset_d = WrAddrOffset + 'd64; // update address since the current one has been sent
+                            WrReqId[2+RBB_ADDR_WIDTH-1:0] = {2'd3, rbbReqLineIdx_b[3*RBB_ADDR_WIDTH+RBB_ADDR_WIDTH-1:3*RBB_ADDR_WIDTH]}; //Request ID is generated by combining the pointer and the line index
+                            rbbReqAck_b[3] = 'b1; // tell the RBB that the request has been sent to CCI
+                        end
+                        //if RBB is willing to write data but CCI is stalled, then do nothing
+                        else if (rbbReqValid_b[3])
+                        begin
+                            //do nothing
+                        end
+                        //if RBB is not willing to write data, then we can infer that the RBB has sent all the write requests
+                        //We can go to next RBB, and meanwhile claim that a result batch has been sent back
+                        //Question: How to let CPU know it?
+                        else
+                        begin
+                            if (rbb_pointer == (NUM_PEA-1))
+                                rbb_pointer_d = 'b0;
+                            else
+                                rbb_pointer_d = rbb_pointer + 'b1;
+                        end
+                    end
+                end
+            endcase
+        end
     end
 
     //-------------------------
@@ -739,13 +740,13 @@ module batch_manager #(parameter TBB_WR_ADDR_WIDTH=12,
     reg [DATA_WIDTH-1:0]   WrData;
     always @(*)
     begin
-	    WrData = 'b0;
+      WrData = 'b0;
             case(rbb_pointer)         /* synthesis parallel_case */
-		    'd0:	WrData = rbbRdDout_b[DATA_WIDTH-1+DATA_WIDTH*0:DATA_WIDTH*0];
-		    'd1:	WrData = rbbRdDout_b[DATA_WIDTH-1+DATA_WIDTH*1:DATA_WIDTH*1];
-		    'd2:	WrData = rbbRdDout_b[DATA_WIDTH-1+DATA_WIDTH*2:DATA_WIDTH*2];
-		    'd3:	WrData = rbbRdDout_b[DATA_WIDTH-1+DATA_WIDTH*3:DATA_WIDTH*3];
-	    endcase
+        'd0:  WrData = rbbRdDout_b[DATA_WIDTH-1+DATA_WIDTH*0:DATA_WIDTH*0];
+        'd1:  WrData = rbbRdDout_b[DATA_WIDTH-1+DATA_WIDTH*1:DATA_WIDTH*1];
+        'd2:  WrData = rbbRdDout_b[DATA_WIDTH-1+DATA_WIDTH*2:DATA_WIDTH*2];
+        'd3:  WrData = rbbRdDout_b[DATA_WIDTH-1+DATA_WIDTH*3:DATA_WIDTH*3];
+      endcase
     end
     wire [TXHDR_WIDTH-1:0]  WrHdr   = {
                                         5'h00,                          // [60:56]      Byte Enable
@@ -755,7 +756,7 @@ module batch_manager #(parameter TBB_WR_ADDR_WIDTH=12,
                                         WrReqId                         // [13:0]       Meta data to track the SPL requests
                                         };
 
-	// Sending Requests
+  // Sending Requests
     always @(posedge clk)
     begin
         if(!reset_n)
@@ -763,19 +764,19 @@ module batch_manager #(parameter TBB_WR_ADDR_WIDTH=12,
             afuid_updtd             <= 'b0;
             cf2ci_C1TxHdr           <= 'b0;
             cf2ci_C1TxWrValid       <= 'b0;
-	    cf2ci_C1TxData	    <= 'b0;
+      cf2ci_C1TxData      <= 'b0;
             cf2ci_C0TxHdr           <= 'b0;
             cf2ci_C0TxRdValid       <= 'b0;
         end
-	else
-	begin	
+  else
+  begin 
             //Tx Path
             //--------------------------------------------------------------------------
 
             // Channel 1
             if(ci2cf_C1TxAlmFull==0)
             begin
-		//The first write request should be DSM initialization
+    //The first write request should be DSM initialization
                 if( ci2cf_InitDn && dsm_base_valid && !afuid_updtd )
                 begin
                     afuid_updtd             <= 1;
@@ -792,7 +793,7 @@ module batch_manager #(parameter TBB_WR_ADDR_WIDTH=12,
                                                     BWA_MEM_SW                 // [127:0]      AFU ID
                                                };
                 end
-                else if (re2xy_go)	//Executing real tasks
+                else if (re2xy_go)  //Executing real tasks
                 begin
                     if( WrHdr_valid )                                         // Write to Destination Workspace
                     begin                                                          //-------------------------------------
@@ -820,7 +821,7 @@ module batch_manager #(parameter TBB_WR_ADDR_WIDTH=12,
 
             /* synthesis translate_on */
 
-	end
+  end
     end
 
     //-------------------------
@@ -832,27 +833,27 @@ module batch_manager #(parameter TBB_WR_ADDR_WIDTH=12,
     //Only Read Responses are considered
     always @(*)
     begin
-	    tbbWrEn_b = 'b0;
-	    //tbbWrAddr_b = 'b0;
-	    //tbbWrDin_b = 'b0;
+      tbbWrEn_b = 'b0;
+      //tbbWrAddr_b = 'b0;
+      //tbbWrDin_b = 'b0;
             case(rb2cf_C0RxHdr[13:TBB_WR_ADDR_WIDTH])         /* synthesis parallel_case */
-		    'd0:
-    			tbbWrEn_b[0] = re2xy_go && rb2cf_C0RxRdValid;
-    			//tbbWrDin_b[0*TBB_WR_DATA_WIDTH+TBB_WR_DATA_WIDTH-1:0*TBB_WR_DATA_WIDTH] = rb2cf_C0RxData;
-    			//tbbWrAddr_b[TBB_WR_ADDR_WIDTH*0+TBB_WR_ADDR_WIDTH-1:TBB_WR_ADDR_WIDTH*0] = rb2cf_C0RxHdr[TBB_WR_ADDR_WIDTH-1:0];
-		    'd1:
-    			tbbWrEn_b[1] = re2xy_go && rb2cf_C0RxRdValid;
-    			//tbbWrDin_b[1*TBB_WR_DATA_WIDTH+TBB_WR_DATA_WIDTH-1:1*TBB_WR_DATA_WIDTH] = rb2cf_C0RxData;
-    			//tbbWrAddr_b[TBB_WR_ADDR_WIDTH*1+TBB_WR_ADDR_WIDTH-1:TBB_WR_ADDR_WIDTH*1] = rb2cf_C0RxHdr[TBB_WR_ADDR_WIDTH-1:0];
-		    'd2:
-    			tbbWrEn_b[2] = re2xy_go && rb2cf_C0RxRdValid;
-    			//tbbWrDin_b[2*TBB_WR_DATA_WIDTH+TBB_WR_DATA_WIDTH-1:2*TBB_WR_DATA_WIDTH] = rb2cf_C0RxData;
-    			//tbbWrAddr_b[TBB_WR_ADDR_WIDTH*2+TBB_WR_ADDR_WIDTH-1:TBB_WR_ADDR_WIDTH*2] = rb2cf_C0RxHdr[TBB_WR_ADDR_WIDTH-1:0];
-		    'd3:
-    			tbbWrEn_b[3] = re2xy_go && rb2cf_C0RxRdValid;
-    			//tbbWrDin_b[3*TBB_WR_DATA_WIDTH+TBB_WR_DATA_WIDTH-1:3*TBB_WR_DATA_WIDTH] = rb2cf_C0RxData;
-    			//tbbWrAddr_b[TBB_WR_ADDR_WIDTH*3+TBB_WR_ADDR_WIDTH-1:TBB_WR_ADDR_WIDTH*3] = rb2cf_C0RxHdr[TBB_WR_ADDR_WIDTH-1:0];
-	    endcase
+        'd0:
+          tbbWrEn_b[0] = re2xy_go && rb2cf_C0RxRdValid;
+          //tbbWrDin_b[0*TBB_WR_DATA_WIDTH+TBB_WR_DATA_WIDTH-1:0*TBB_WR_DATA_WIDTH] = rb2cf_C0RxData;
+          //tbbWrAddr_b[TBB_WR_ADDR_WIDTH*0+TBB_WR_ADDR_WIDTH-1:TBB_WR_ADDR_WIDTH*0] = rb2cf_C0RxHdr[TBB_WR_ADDR_WIDTH-1:0];
+        'd1:
+          tbbWrEn_b[1] = re2xy_go && rb2cf_C0RxRdValid;
+          //tbbWrDin_b[1*TBB_WR_DATA_WIDTH+TBB_WR_DATA_WIDTH-1:1*TBB_WR_DATA_WIDTH] = rb2cf_C0RxData;
+          //tbbWrAddr_b[TBB_WR_ADDR_WIDTH*1+TBB_WR_ADDR_WIDTH-1:TBB_WR_ADDR_WIDTH*1] = rb2cf_C0RxHdr[TBB_WR_ADDR_WIDTH-1:0];
+        'd2:
+          tbbWrEn_b[2] = re2xy_go && rb2cf_C0RxRdValid;
+          //tbbWrDin_b[2*TBB_WR_DATA_WIDTH+TBB_WR_DATA_WIDTH-1:2*TBB_WR_DATA_WIDTH] = rb2cf_C0RxData;
+          //tbbWrAddr_b[TBB_WR_ADDR_WIDTH*2+TBB_WR_ADDR_WIDTH-1:TBB_WR_ADDR_WIDTH*2] = rb2cf_C0RxHdr[TBB_WR_ADDR_WIDTH-1:0];
+        'd3:
+          tbbWrEn_b[3] = re2xy_go && rb2cf_C0RxRdValid;
+          //tbbWrDin_b[3*TBB_WR_DATA_WIDTH+TBB_WR_DATA_WIDTH-1:3*TBB_WR_DATA_WIDTH] = rb2cf_C0RxData;
+          //tbbWrAddr_b[TBB_WR_ADDR_WIDTH*3+TBB_WR_ADDR_WIDTH-1:TBB_WR_ADDR_WIDTH*3] = rb2cf_C0RxHdr[TBB_WR_ADDR_WIDTH-1:0];
+      endcase
     end
 
     // Function: Returns physical address for a DSM register
@@ -868,60 +869,63 @@ module batch_manager #(parameter TBB_WR_ADDR_WIDTH=12,
     ////                                                              Instances
     ////----------------------------------------------------------------------------------------------------------------------------------------------
 
-    //-------------------------
-    //TBB Generation
-    //-------------------------
+    generate
+        genvar i;
 
-generate
-  genvar i;
-  for (i=0; i<NUM_PEA; i=i+1) begin
-	  tbb #(.TBB_WR_ADDR_WIDTH(TBB_WR_ADDR_WIDTH),
-		.TBB_WR_DATA_WIDTH(TBB_WR_DATA_WIDTH),
-		.TBB_RD_ADDR_WIDTH(TBB_RD_ADDR_WIDTH),
-		.TBB_RD_DATA_WIDTH(TBB_RD_DATA_WIDTH)
-	       )tbb(
-	     .clk					(clk),
-	     .reset_n					(reset_n),
-	     .task_start				(bm2pe_start_b[i]),
-	     .task_done					(pe2bm_done_b[i]),
-	     .ReqValid					(tbbReqValid_b[i]),
-	     .ReqLineIdx				(tbbReqLineIdx_b[i*TBB_WR_ADDR_WIDTH+TBB_WR_ADDR_WIDTH-1:i*TBB_WR_ADDR_WIDTH]),
-	     .ReqAck					(tbbReqAck_b[i]),
-	     .WrEn 	         			(tbbWrEn_b[i]),
-    	     .WrAddr					(rb2cf_C0RxHdr[TBB_WR_ADDR_WIDTH-1:0]),
-    	     //.WrAddr					(tbbWrAddr_b[i*TBB_WR_ADDR_WIDTH+TBB_WR_ADDR_WIDTH-1:i*TBB_WR_ADDR_WIDTH]),
-    	     .WrDin					(rb2cf_C0RxData),
-    	     //.WrDin					(tbbWrDin_b[i*TBB_WR_DATA_WIDTH+TBB_WR_DATA_WIDTH-1:i*TBB_WR_DATA_WIDTH]),
-    	     .Full 					(tbbFull_b[i]),
-    	     .RdAddr					(tbbRdAddr_b[i*TBB_RD_ADDR_WIDTH+TBB_RD_ADDR_WIDTH-1:i*TBB_RD_ADDR_WIDTH]),
-    	     .RdDout					(tbbRdDout_b[i*TBB_RD_DATA_WIDTH+TBB_RD_DATA_WIDTH-1:i*TBB_RD_DATA_WIDTH]),
-    	     .Empty 					(tbbEmpty_b[i])
-	  ); 
-  end
+        //-------------------------
+        // TBB Generation
+        //-------------------------
 
-    //-------------------------
-    //RBB Generation
-    //-------------------------
+        for (i=0; i<NUM_PEA; i=i+1) begin
+            tbb #(.TBB_WR_ADDR_WIDTH(TBB_WR_ADDR_WIDTH),
+                  .TBB_WR_DATA_WIDTH(TBB_WR_DATA_WIDTH),
+                  .TBB_RD_ADDR_WIDTH(TBB_RD_ADDR_WIDTH),
+                  .TBB_RD_DATA_WIDTH(TBB_RD_DATA_WIDTH)
+            )tbb
+            (
+                .clk            (clk),
+                .reset_n        (reset_n),
+                .task_start     (bm2pe_start_b[i]),
+                .task_done      (pe2bm_done_b[i]),
+                .ReqValid       (tbbReqValid_b[i]),
+                .ReqLineIdx     (tbbReqLineIdx_b[i*TBB_WR_ADDR_WIDTH+TBB_WR_ADDR_WIDTH-1:i*TBB_WR_ADDR_WIDTH]),
+                .ReqAck         (tbbReqAck_b[i]),
+                .WrEn           (tbbWrEn_b[i]),
+                .WrAddr         (rb2cf_C0RxHdr[TBB_WR_ADDR_WIDTH-1:0]),
+                //.WrAddr         (tbbWrAddr_b[i*TBB_WR_ADDR_WIDTH+TBB_WR_ADDR_WIDTH-1:i*TBB_WR_ADDR_WIDTH]),
+                .WrDin          (rb2cf_C0RxData),
+                //.WrDin          (tbbWrDin_b[i*TBB_WR_DATA_WIDTH+TBB_WR_DATA_WIDTH-1:i*TBB_WR_DATA_WIDTH]),
+                .Full           (tbbFull_b[i]),
+                .RdAddr         (tbbRdAddr_b[i*TBB_RD_ADDR_WIDTH+TBB_RD_ADDR_WIDTH-1:i*TBB_RD_ADDR_WIDTH]),
+                .RdDout         (tbbRdDout_b[i*TBB_RD_DATA_WIDTH+TBB_RD_DATA_WIDTH-1:i*TBB_RD_DATA_WIDTH]),
+                .Empty          (tbbEmpty_b[i])
+            ); 
+        end
 
-  for (i=0; i<NUM_PEA; i=i+1) begin
-	  rbb #(.RBB_ADDR_WIDTH(RBB_ADDR_WIDTH),
-		.RBB_DATA_WIDTH(RBB_DATA_WIDTH)
-	       )rbb(
-	     .clk					(clk),
-	     .reset_n					(reset_n),
-	     .task_done					(pe2bm_done_b[i]),
-	     .ReqValid					(rbbReqValid_b[i]),
-	     .ReqLineIdx				(rbbReqLineIdx_b[i*RBB_ADDR_WIDTH+RBB_ADDR_WIDTH-1:i*RBB_ADDR_WIDTH]),
-	     .ReqAck					(rbbReqAck_b[i]),
-	     .WrEn 	         			(rbbWrEn_b[i]),
-    	     .WrAddr					(rbbWrAddr_b[i*RBB_ADDR_WIDTH+RBB_ADDR_WIDTH-1:i*RBB_ADDR_WIDTH]),
-    	     .WrDin					(rbbWrDin_b[i*RBB_DATA_WIDTH+RBB_DATA_WIDTH-1:i*RBB_DATA_WIDTH]),
-    	     .Full 					(rbbFull_b[i]),
-    	     .RdAddr					(rbbRdAddr_b[i*RBB_ADDR_WIDTH+RBB_ADDR_WIDTH-1:i*RBB_ADDR_WIDTH]),
-    	     .RdDout					(rbbRdDout_b[i*RBB_DATA_WIDTH+RBB_DATA_WIDTH-1:i*RBB_DATA_WIDTH]),
-    	     .Empty 					(rbbEmpty_b[i])
-	  ); 
-  end
-endgenerate
+        //-------------------------
+        // RBB Generation
+        //-------------------------
+
+        for (i=0; i<NUM_PEA; i=i+1) begin
+            rbb #(.RBB_ADDR_WIDTH(RBB_ADDR_WIDTH),
+                  .RBB_DATA_WIDTH(RBB_DATA_WIDTH)
+            )rbb
+            (
+                .clk            (clk),
+                .reset_n        (reset_n),
+                .task_done      (pe2bm_done_b[i]),
+                .ReqValid       (rbbReqValid_b[i]),
+                .ReqLineIdx     (rbbReqLineIdx_b[i*RBB_ADDR_WIDTH+RBB_ADDR_WIDTH-1:i*RBB_ADDR_WIDTH]),
+                .ReqAck         (rbbReqAck_b[i]),
+                .WrEn           (rbbWrEn_b[i]),
+                .WrAddr         (rbbWrAddr_b[i*RBB_ADDR_WIDTH+RBB_ADDR_WIDTH-1:i*RBB_ADDR_WIDTH]),
+                .WrDin          (rbbWrDin_b[i*RBB_DATA_WIDTH+RBB_DATA_WIDTH-1:i*RBB_DATA_WIDTH]),
+                .Full           (rbbFull_b[i]),
+                .RdAddr         (rbbRdAddr_b[i*RBB_ADDR_WIDTH+RBB_ADDR_WIDTH-1:i*RBB_ADDR_WIDTH]),
+                .RdDout         (rbbRdDout_b[i*RBB_DATA_WIDTH+RBB_DATA_WIDTH-1:i*RBB_DATA_WIDTH]),
+                .Empty          (rbbEmpty_b[i])
+            ); 
+        end
+    endgenerate
 
 endmodule
