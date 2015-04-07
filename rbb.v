@@ -9,7 +9,7 @@
 //                      it instantiates rbb_bram
 // ***************************************************************************
 
-module rbb #(parameter RBB_ADDR_WIDTH, RBB_DATA_WIDTH)
+module rbb #(parameter RBB_ADDR_WIDTH=8, RBB_DATA_WIDTH=512)
 (
     // ---------------------------global signals-------------------------------------------------
     clk,                              //              in    std_logic;  -- Core clock
@@ -46,10 +46,12 @@ module rbb #(parameter RBB_ADDR_WIDTH, RBB_DATA_WIDTH)
 
    reg [1:0]				cur_state;
    reg [1:0]				next_state;
+   reg [RBB_ADDR_WIDTH-1:0]		rd_counter_d;
+   reg [RBB_ADDR_WIDTH-1:0]		rd_counter;
 
-   localparam IDLE			'b01
-   localparam WRITE			'b10
-   localparam NUM_LINES			(1 << RBB_ADDR_WIDTH)
+   localparam IDLE			= 'b01;
+   localparam WRITE			= 'b10;
+   localparam NUM_LINES			= (1 << RBB_ADDR_WIDTH);
 
     //-------------------------
     //STATE_MACHINE
@@ -82,7 +84,7 @@ module rbb #(parameter RBB_ADDR_WIDTH, RBB_DATA_WIDTH)
 		end
                 WRITE:
 		begin
-			if (ReqAck && rd_counter == 'd(NUM_LINES-1))
+			if (ReqAck && rd_counter == (NUM_LINES-1))
 				next_state = IDLE;
 			else
 				next_state = WRITE;
@@ -97,8 +99,6 @@ module rbb #(parameter RBB_ADDR_WIDTH, RBB_DATA_WIDTH)
     //-------------------------
     //Output
     //-------------------------
-    reg [RBB_ADDR_WIDTH-1:0]		rd_counter_d;
-    reg [RBB_ADDR_WIDTH-1:0]		rd_counter;
     wire Full = (cur_state == WRITE);
     wire Empty = ~Full;
     wire [RBB_ADDR_WIDTH-1:0] RdAddrBRAM = (cur_state == IDLE && next_state == WRITE) ? 'b0 : rd_counter + 'b1;
@@ -149,7 +149,7 @@ module rbb #(parameter RBB_ADDR_WIDTH, RBB_DATA_WIDTH)
 	rd_counter_d = rd_counter;
 	if (cur_state == WRITE && ReqAck) 
 	begin
-		if (rd_counter == 'd(NUM_LINES-1))
+		if (rd_counter == (NUM_LINES-1))
 			rd_counter_d = 'b0;
 		else
 			rd_counter_d = rd_counter + 'b1;

@@ -9,7 +9,10 @@
 //                      it instantiates tbb_bram
 // ***************************************************************************
 
-module tbb #(parameter TBB_WR_ADDR_WIDTH, TBB_WR_DATA_WIDTH, TBB_RD_ADDR_WIDTH, TBB_RD_DATA_WIDTH)
+module tbb #(parameter TBB_WR_ADDR_WIDTH=12, 
+                       TBB_WR_DATA_WIDTH=512, 
+                       TBB_RD_ADDR_WIDTH=16, 
+                       TBB_RD_DATA_WIDTH=32)
 (
     // ---------------------------global signals-------------------------------------------------
     clk,                              //              in    std_logic;  -- Core clock
@@ -48,12 +51,12 @@ module tbb #(parameter TBB_WR_ADDR_WIDTH, TBB_WR_DATA_WIDTH, TBB_RD_ADDR_WIDTH, 
    reg [4:0]				cur_state;
    reg [4:0]				next_state;
 
-   localparam RESET			'b00001
-   localparam READ			'b00010
-   localparam WAIT			'b00100
-   localparam WRITE			'b01000
-   localparam HOLD			'b10000
-   localparam NUM_LINES			(1 << TBB_WR_ADDR_WIDTH)
+   localparam RESET			= 'b00001;
+   localparam READ			= 'b00010;
+   localparam WAIT			= 'b00100;
+   localparam WRITE			= 'b01000;
+   localparam HOLD			= 'b10000;
+   localparam NUM_LINES			= 1 << TBB_WR_ADDR_WIDTH;
 
     reg [TBB_WR_ADDR_WIDTH-1:0]		wr_counter_d;
     reg [TBB_WR_ADDR_WIDTH-1:0]		wr_counter;
@@ -88,7 +91,7 @@ module tbb #(parameter TBB_WR_ADDR_WIDTH, TBB_WR_DATA_WIDTH, TBB_RD_ADDR_WIDTH, 
 		end
                 READ:
 		begin
-			if (ReqAck && req_counter == 'd(NUM_LINES-1))
+			if (ReqAck && req_counter == (NUM_LINES-1))
 				next_state = WAIT;
 			else
 				next_state = READ;
@@ -99,7 +102,7 @@ module tbb #(parameter TBB_WR_ADDR_WIDTH, TBB_WR_DATA_WIDTH, TBB_RD_ADDR_WIDTH, 
 		end
                 WRITE:
 		begin
-			if (WrEn && wr_counter == 'd(NUM_LINES-1))
+			if (WrEn && wr_counter == (NUM_LINES-1))
 				next_state = HOLD;
 			else
 				next_state = WRITE;
@@ -125,11 +128,15 @@ module tbb #(parameter TBB_WR_ADDR_WIDTH, TBB_WR_DATA_WIDTH, TBB_RD_ADDR_WIDTH, 
     always @ (posedge clk)
     begin
 	    if (!reset_n)
+	    begin
 		    wr_counter <= 'b0;
 	    	    req_counter <= 'b0;
+	    end
 	    else
+	    begin
 		    wr_counter <= wr_counter_d;
 	    	    req_counter <= req_counter_d;
+	    end
     end
     always @ (*)
     begin
@@ -137,14 +144,14 @@ module tbb #(parameter TBB_WR_ADDR_WIDTH, TBB_WR_DATA_WIDTH, TBB_RD_ADDR_WIDTH, 
 	req_counter_d = req_counter;
 	if (WrEn) 
 	begin
-		if (wr_counter == 'd(NUM_LINES-1))
+		if (wr_counter == (NUM_LINES-1))
 			wr_counter_d = 'b0;
 		else
 			wr_counter_d = wr_counter + 'b1;
 	end
 	if (ReqAck) 
 	begin
-		if (req_counter == 'd(NUM_LINES-1))
+		if (req_counter == (NUM_LINES-1))
 			req_counter_d = 'b0;
 		else
 			req_counter_d = req_counter + 'b1;
