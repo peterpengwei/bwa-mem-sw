@@ -152,38 +152,38 @@ module batch_manager #(parameter TBB_WR_ADDR_WIDTH=12,
     bm2pe_tbbRdDout_b
 );
 
-   input                        clk;                  //              in    std_logic;  -- Core clock
-   input                        reset_n;              //              in    std_logic;  -- Use SPARINGLY only for control
+    input                        clk;                  //              in    std_logic;  -- Core clock
+    input                        reset_n;              //              in    std_logic;  -- Use SPARINGLY only for control
 
-   input [RXHDR_WIDTH-1:0]      rb2cf_C0RxHdr;        // [RXHDR_WIDTH-1:0]cci_intf:           Rx header to SPL channel 0
-   input [DATA_WIDTH -1:0]      rb2cf_C0RxData;       // [DATA_WIDTH -1:0]cci_intf:           data response to SPL | no back pressure
-   input                        rb2cf_C0RxWrValid;    //                  cci_intf:           write response enable
-   input                        rb2cf_C0RxRdValid;    //                  cci_intf:           read response enable
-   input                        rb2cf_C0RxCfgValid;   //                  cci_intf:           config response enable
-   // input                        rb2cf_C0RxUMsgValid;  //                  cci_intf:           Rx UMsg valid
-   // input                        rb2cf_C0RxIntrValid;  //                  cci_intf:           interrupt response enable
-   input [RXHDR_WIDTH-1:0]      rb2cf_C1RxHdr;        // [RXHDR_WIDTH-1:0]cci_intf:           Rx header to SPL channel 1
-   input                        rb2cf_C1RxWrValid;    //                  cci_intf:           write response valid
-   // input                        rb2cf_C1RxIntrValid;  //                  cci_intf:           interrupt response valid
+    input [RXHDR_WIDTH-1:0]      rb2cf_C0RxHdr;        // [RXHDR_WIDTH-1:0]cci_intf:           Rx header to SPL channel 0
+    input [DATA_WIDTH -1:0]      rb2cf_C0RxData;       // [DATA_WIDTH -1:0]cci_intf:           data response to SPL | no back pressure
+    input                        rb2cf_C0RxWrValid;    //                  cci_intf:           write response enable
+    input                        rb2cf_C0RxRdValid;    //                  cci_intf:           read response enable
+    input                        rb2cf_C0RxCfgValid;   //                  cci_intf:           config response enable
+    // input                        rb2cf_C0RxUMsgValid;  //                  cci_intf:           Rx UMsg valid
+    // input                        rb2cf_C0RxIntrValid;  //                  cci_intf:           interrupt response enable
+    input [RXHDR_WIDTH-1:0]      rb2cf_C1RxHdr;        // [RXHDR_WIDTH-1:0]cci_intf:           Rx header to SPL channel 1
+    input                        rb2cf_C1RxWrValid;    //                  cci_intf:           write response valid
+    // input                        rb2cf_C1RxIntrValid;  //                  cci_intf:           interrupt response valid
 
-   output [TXHDR_WIDTH-1:0]     cf2ci_C0TxHdr;        // [TXHDR_WIDTH-1:0]cci_intf:           Tx Header from SPL channel 0
-   output                       cf2ci_C0TxRdValid;    //                  cci_intf:           Tx read request enable
-   output [TXHDR_WIDTH-1:0]     cf2ci_C1TxHdr;        //                  cci_intf:           Tx Header from SPL channel 1
-   output [DATA_WIDTH -1:0]     cf2ci_C1TxData;       //                  cci_intf:           Tx data from SPL
-   output                       cf2ci_C1TxWrValid;    //                  cci_intf:           Tx write request enable
-   // output                       cf2ci_C1TxIntrValid;  //                  cci_intf:           Tx interrupt valid
-   input                        ci2cf_C0TxAlmFull;    //                  cci_intf:           Tx memory channel 0 almost full
-   input                        ci2cf_C1TxAlmFull;    //                  cci_intf:           TX memory channel 1 almost full
-   
-   input                        ci2cf_InitDn;         //                  cci_intf:           Link initialization is complete
+    output [TXHDR_WIDTH-1:0]     cf2ci_C0TxHdr;        // [TXHDR_WIDTH-1:0]cci_intf:           Tx Header from SPL channel 0
+    output                       cf2ci_C0TxRdValid;    //                  cci_intf:           Tx read request enable
+    output [TXHDR_WIDTH-1:0]     cf2ci_C1TxHdr;        //                  cci_intf:           Tx Header from SPL channel 1
+    output [DATA_WIDTH -1:0]     cf2ci_C1TxData;       //                  cci_intf:           Tx data from SPL
+    output                       cf2ci_C1TxWrValid;    //                  cci_intf:           Tx write request enable
+    // output                       cf2ci_C1TxIntrValid;  //                  cci_intf:           Tx interrupt valid
+    input                        ci2cf_C0TxAlmFull;    //                  cci_intf:           Tx memory channel 0 almost full
+    input                        ci2cf_C1TxAlmFull;    //                  cci_intf:           TX memory channel 1 almost full
 
-   output [NUM_PEA-1:0]                     bm2pe_start_b;
-   input  [NUM_PEA-1:0]                     pe2bm_done_b;
-   input  [NUM_PEA-1:0]                     pe2bm_rbbWrEn_b;
-   input  [RBB_ADDR_WIDTH*NUM_PEA-1:0]      pe2bm_rbbWrAddr_b;
-   input  [RBB_DATA_WIDTH*NUM_PEA-1:0]      pe2bm_rbbWrDin_b;
-   input  [TBB_RD_ADDR_WIDTH*NUM_PEA-1:0]   pe2bm_tbbRdAddr_b;
-   output [TBB_RD_DATA_WIDTH*NUM_PEA-1:0]   bm2pe_tbbRdDout_b;
+    input                        ci2cf_InitDn;         //                  cci_intf:           Link initialization is complete
+
+    output [NUM_PEA-1:0]                     bm2pe_start_b;
+    input  [NUM_PEA-1:0]                     pe2bm_done_b;
+    input  [NUM_PEA-1:0]                     pe2bm_rbbWrEn_b;
+    input  [RBB_ADDR_WIDTH*NUM_PEA-1:0]      pe2bm_rbbWrAddr_b;
+    input  [RBB_DATA_WIDTH*NUM_PEA-1:0]      pe2bm_rbbWrDin_b;
+    input  [TBB_RD_ADDR_WIDTH*NUM_PEA-1:0]   pe2bm_tbbRdAddr_b;
+    output [TBB_RD_DATA_WIDTH*NUM_PEA-1:0]   bm2pe_tbbRdDout_b;
 
     //----------------------------------------------------------------------------------------------------------------------
     // NLB v1.1 AFU ID
