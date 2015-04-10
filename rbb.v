@@ -25,7 +25,8 @@ module rbb #(parameter RBB_ADDR_WIDTH=8, RBB_DATA_WIDTH=512)
     Full,
     RdAddr,
     RdDout,
-    Empty
+    Empty,
+    TestCmp
 );
 
     input                           clk;                  //              in    std_logic;  -- Core clock
@@ -42,11 +43,13 @@ module rbb #(parameter RBB_ADDR_WIDTH=8, RBB_DATA_WIDTH=512)
     output  [RBB_ADDR_WIDTH-1:0]    ReqLineIdx;
     output                          ReqValid;
     output  [RBB_DATA_WIDTH-1:0]    RdDout;
+    output                          TestCmp;
 
     reg [1:0]                   cur_state;
     reg [1:0]                   next_state;
     reg [RBB_ADDR_WIDTH-1:0]    rd_counter_d;
     reg [RBB_ADDR_WIDTH-1:0]    rd_counter;
+    reg                         TestCmp;
 
     localparam IDLE         = 'b01;
     localparam WRITE        = 'b10;
@@ -144,10 +147,16 @@ module rbb #(parameter RBB_ADDR_WIDTH=8, RBB_DATA_WIDTH=512)
 
     always @ (posedge clk)
     begin
-        if (!reset_n)
-            rd_counter <= 0;
-        else
+        if (!reset_n) begin
+            rd_counter  <= 0;
+            TestCmp     <= 0;
+        end else begin
             rd_counter <= rd_counter_d;
+            if (   cur_state == WRITE 
+                && next_state == IDLE 
+                && rd_counter == (NUM_LINES-1))
+                TestCmp <= 1;
+        end 
     end
 
     always @ (*)
