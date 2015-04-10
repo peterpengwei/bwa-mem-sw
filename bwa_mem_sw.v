@@ -116,18 +116,18 @@ module bwa_mem_sw #(parameter TXHDR_WIDTH=61, RXHDR_WIDTH=18, DATA_WIDTH =512)
     rb2cf_C0RxWrValid,                //                     cci_intf:           Rx write response enable
     rb2cf_C0RxRdValid,                //                     cci_intf:           Rx read response enable
     rb2cf_C0RxCfgValid,               //                     cci_intf:           Rx config response enable
-    //rb2cf_C0RxUMsgValid,              //                     cci_intf:           Rx UMsg valid
-    //rb2cf_C0RxIntrValid,                //                     cci_intf:           Rx interrupt valid
+    rb2cf_C0RxUMsgValid,              //                     cci_intf:           Rx UMsg valid
+    rb2cf_C0RxIntrValid,                //                     cci_intf:           Rx interrupt valid
     rb2cf_C1RxHdr,                    // [RXHDR_WIDTH-1:0]   cci_intf:           Rx header to SPL channel 1
     rb2cf_C1RxWrValid,                //                     cci_intf:           Rx write response valid
-    //rb2cf_C1RxIntrValid,                //                     cci_intf:           Rx interrupt valid
+    rb2cf_C1RxIntrValid,                //                     cci_intf:           Rx interrupt valid
 
     cf2ci_C0TxHdr,                    // [TXHDR_WIDTH-1:0]   cci_intf:           Tx Header from SPL channel 0
     cf2ci_C0TxRdValid,                //                     cci_intf:           Tx read request enable
     cf2ci_C1TxHdr,                    //                     cci_intf:           Tx Header from SPL channel 1
     cf2ci_C1TxData,                   //                     cci_intf:           Tx data from SPL
     cf2ci_C1TxWrValid,                //                     cci_intf:           Tx write request enable
-    //cf2ci_C1TxIntrValid,              //                     cci_intf:           Tx interrupt valid
+    cf2ci_C1TxIntrValid,              //                     cci_intf:           Tx interrupt valid
     ci2cf_C0TxAlmFull,                //                     cci_intf:           Tx memory channel 0 almost full
     ci2cf_C1TxAlmFull,                //                     cci_intf:           TX memory channel 1 almost full
 
@@ -142,28 +142,30 @@ module bwa_mem_sw #(parameter TXHDR_WIDTH=61, RXHDR_WIDTH=18, DATA_WIDTH =512)
     input                        rb2cf_C0RxWrValid;    //                  cci_intf:           write response enable
     input                        rb2cf_C0RxRdValid;    //                  cci_intf:           read response enable
     input                        rb2cf_C0RxCfgValid;   //                  cci_intf:           config response enable
-    //input                        rb2cf_C0RxUMsgValid;  //                  cci_intf:           Rx UMsg valid
-    //input                        rb2cf_C0RxIntrValid;    //                  cci_intf:           interrupt response enable
+    input                        rb2cf_C0RxUMsgValid;  //                  cci_intf:           Rx UMsg valid
+    input                        rb2cf_C0RxIntrValid;    //                  cci_intf:           interrupt response enable
     input [RXHDR_WIDTH-1:0]      rb2cf_C1RxHdr;        // [RXHDR_WIDTH-1:0]cci_intf:           Rx header to SPL channel 1
     input                        rb2cf_C1RxWrValid;    //                  cci_intf:           write response valid
-    //input                        rb2cf_C1RxIntrValid;    //                  cci_intf:           interrupt response valid
+    input                        rb2cf_C1RxIntrValid;    //                  cci_intf:           interrupt response valid
 
     output [TXHDR_WIDTH-1:0]     cf2ci_C0TxHdr;        // [TXHDR_WIDTH-1:0]cci_intf:           Tx Header from SPL channel 0
     output                       cf2ci_C0TxRdValid;    //                  cci_intf:           Tx read request enable
     output [TXHDR_WIDTH-1:0]     cf2ci_C1TxHdr;        //                  cci_intf:           Tx Header from SPL channel 1
     output [DATA_WIDTH -1:0]     cf2ci_C1TxData;       //                  cci_intf:           Tx data from SPL
     output                       cf2ci_C1TxWrValid;    //                  cci_intf:           Tx write request enable
-    //output                       cf2ci_C1TxIntrValid;  //                  cci_intf:           Tx interrupt valid
+    output                       cf2ci_C1TxIntrValid;  //                  cci_intf:           Tx interrupt valid
     input                        ci2cf_C0TxAlmFull;    //                  cci_intf:           Tx memory channel 0 almost full
     input                        ci2cf_C1TxAlmFull;    //                  cci_intf:           TX memory channel 1 almost full
 
     input                        ci2cf_InitDn;         //                  cci_intf:           Link initialization is complete
 
-    localparam  NUM_PEA         = 1;
-    localparam  RBB_ADDR_WIDTH  = 18;
-    localparam  TBB_ADDR_WIDTH  = 18;
-    localparam  RBB_DATA_WIDTH  = DATA_WIDTH;
-    localparam  TBB_DATA_WIDTH  = DATA_WIDTH;
+    localparam  NUM_PEA             = 4;
+    localparam  TBB_WR_ADDR_WIDTH   = 12;
+    localparam  TBB_WR_DATA_WIDTH   = 512;
+    localparam  TBB_RD_ADDR_WIDTH   = 16;
+    localparam  TBB_RD_DATA_WIDTH   = 32;
+    localparam  RBB_ADDR_WIDTH      = 8;
+    localparam  RBB_DATA_WIDTH      = 512;
 
 //   localparam      PEND_THRESH = 7;
 //   localparam      ADDR_LMT    = 20;
@@ -182,6 +184,8 @@ module bwa_mem_sw #(parameter TXHDR_WIDTH=61, RXHDR_WIDTH=18, DATA_WIDTH =512)
 //   
 //   wire                         test_Resetb;
 
+    assign cf2ci_C1TxIntrValid = 'b0;
+
     wire    [NUM_PEA-1:0]                   bm2pe_start_b;
     wire    [NUM_PEA-1:0]                   pe2bm_done_b;
     wire    [NUM_PEA-1:0]                   pe2bm_rbbWrEn_b;
@@ -190,12 +194,14 @@ module bwa_mem_sw #(parameter TXHDR_WIDTH=61, RXHDR_WIDTH=18, DATA_WIDTH =512)
     // wire    [NUM_PEA-1:0]			        bm2pe_rbbFull_b;
 
     // wire    [NUM_PEA-1:0]			        pe2bm_tbbRdEn_b;
-    wire    [TBB_ADDR_WIDTH*NUM_PEA-1:0]    pe2bm_tbbRdAddr_b;
-    wire    [TBB_DATA_WIDTH*NUM_PEA-1:0]    bm2pe_tbbRdDout_b;
+    wire    [TBB_RD_ADDR_WIDTH*NUM_PEA-1:0] pe2bm_tbbRdAddr_b;
+    wire    [TBB_RD_DATA_WIDTH*NUM_PEA-1:0] bm2pe_tbbRdDout_b;
     wire    [NUM_PEA-1:0]                   bm2pe_tbbEmpty_b;
 
-    batch_manager #(.TBB_ADDR_WIDTH(TBB_ADDR_WIDTH),
-                    .TBB_DATA_WIDTH(TBB_DATA_WIDTH),
+    batch_manager #(.TBB_WR_ADDR_WIDTH(TBB_WR_ADDR_WIDTH),
+                    .TBB_WR_DATA_WIDTH(TBB_WR_DATA_WIDTH),
+                    .TBB_RD_ADDR_WIDTH(TBB_RD_ADDR_WIDTH),
+                    .TBB_RD_DATA_WIDTH(TBB_RD_DATA_WIDTH),
                     .RBB_ADDR_WIDTH(RBB_ADDR_WIDTH),
                     .RBB_DATA_WIDTH(RBB_DATA_WIDTH),
                     .NUM_PEA(NUM_PEA),
@@ -261,20 +267,21 @@ module bwa_mem_sw #(parameter TXHDR_WIDTH=61, RXHDR_WIDTH=18, DATA_WIDTH =512)
         genvar i;
         for (i = 0; i < NUM_PEA; i = i + 1) begin
             test_array #(
-                .DATA_WIDTH(DATA_WIDTH),
-                .TBB_ADDR_WIDTH(TBB_ADDR_WIDTH),
+                .TBB_DATA_WIDTH(TBB_RD_DATA_WIDTH),
+                .TBB_ADDR_WIDTH(TBB_RD_ADDR_WIDTH),
+                .RBB_DATA_WIDTH(RBB_DATA_WIDTH),
                 .RBB_ADDR_WIDTH(RBB_ADDR_WIDTH)
             )
             pe_array (
                 .clk                (clk),
                 .reset_n            (reset_n),
-                .bm2pe_start        (bm2pe_start_b),
-                .pe2bm_done         (pe2bm_done_b),
+                .bm2pe_start        (bm2pe_start_b[i]),
+                .pe2bm_done         (pe2bm_done_b[i]),
                 .pe2bm_rbbWrEn      (pe2bm_rbbWrEn_b[i]),
                 .pe2bm_rbbWrAddr    (pe2bm_rbbWrAddr_b[i*RBB_ADDR_WIDTH+RBB_ADDR_WIDTH-1:i*RBB_ADDR_WIDTH]),
                 .pe2bm_rbbWrDin     (pe2bm_rbbWrDin_b[i*RBB_DATA_WIDTH+RBB_DATA_WIDTH-1:i*RBB_DATA_WIDTH]),
-                .pe2bm_tbbRdAddr    (pe2bm_tbbRdAddr_b[i*TBB_ADDR_WIDTH+TBB_ADDR_WIDTH-1:i*TBB_ADDR_WIDTH]),
-                .bm2pe_tbbRdDout    (bm2pe_tbbRdDout_b[i*TBB_DATA_WIDTH+TBB_DATA_WIDTH-1:i*TBB_DATA_WIDTH]),
+                .pe2bm_tbbRdAddr    (pe2bm_tbbRdAddr_b[i*TBB_RD_ADDR_WIDTH+TBB_RD_ADDR_WIDTH-1:i*TBB_RD_ADDR_WIDTH]),
+                .bm2pe_tbbRdDout    (bm2pe_tbbRdDout_b[i*TBB_RD_DATA_WIDTH+TBB_RD_DATA_WIDTH-1:i*TBB_RD_DATA_WIDTH])
             );
         end
     endgenerate
