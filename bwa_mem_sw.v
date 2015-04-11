@@ -164,8 +164,10 @@ module bwa_mem_sw #(parameter TXHDR_WIDTH=61, RXHDR_WIDTH=18, DATA_WIDTH =512)
     localparam  TBB_WR_DATA_WIDTH   = 512;
     localparam  TBB_RD_ADDR_WIDTH   = 16;
     localparam  TBB_RD_DATA_WIDTH   = 32;
-    localparam  RBB_ADDR_WIDTH      = 8;
-    localparam  RBB_DATA_WIDTH      = 512;
+    localparam  RBB_WR_ADDR_WIDTH   = 12;
+    localparam  RBB_WR_DATA_WIDTH   = 32;
+    localparam  RBB_RD_ADDR_WIDTH   = 8;
+    localparam  RBB_RD_DATA_WIDTH   = 512;
 
 //   localparam      PEND_THRESH = 7;
 //   localparam      ADDR_LMT    = 20;
@@ -189,8 +191,8 @@ module bwa_mem_sw #(parameter TXHDR_WIDTH=61, RXHDR_WIDTH=18, DATA_WIDTH =512)
     wire    [NUM_PEA-1:0]                   bm2pe_start_b;
     wire    [NUM_PEA-1:0]                   pe2bm_done_b;
     wire    [NUM_PEA-1:0]                   pe2bm_rbbWrEn_b;
-    wire    [RBB_ADDR_WIDTH*NUM_PEA-1:0]    pe2bm_rbbWrAddr_b;
-    wire    [RBB_DATA_WIDTH*NUM_PEA-1:0]    pe2bm_rbbWrDin_b;
+    wire    [RBB_WR_ADDR_WIDTH*NUM_PEA-1:0] pe2bm_rbbWrAddr_b;
+    wire    [RBB_WR_DATA_WIDTH*NUM_PEA-1:0] pe2bm_rbbWrDin_b;
     // wire    [NUM_PEA-1:0]			        bm2pe_rbbFull_b;
 
     // wire    [NUM_PEA-1:0]			        pe2bm_tbbRdEn_b;
@@ -202,8 +204,10 @@ module bwa_mem_sw #(parameter TXHDR_WIDTH=61, RXHDR_WIDTH=18, DATA_WIDTH =512)
                     .TBB_WR_DATA_WIDTH(TBB_WR_DATA_WIDTH),
                     .TBB_RD_ADDR_WIDTH(TBB_RD_ADDR_WIDTH),
                     .TBB_RD_DATA_WIDTH(TBB_RD_DATA_WIDTH),
-                    .RBB_ADDR_WIDTH(RBB_ADDR_WIDTH),
-                    .RBB_DATA_WIDTH(RBB_DATA_WIDTH),
+                    .RBB_WR_ADDR_WIDTH(RBB_WR_ADDR_WIDTH),
+                    .RBB_WR_DATA_WIDTH(RBB_WR_DATA_WIDTH),
+                    .RBB_RD_ADDR_WIDTH(RBB_RD_ADDR_WIDTH),
+                    .RBB_RD_DATA_WIDTH(RBB_RD_DATA_WIDTH),
                     .NUM_PEA(NUM_PEA),
                     .TXHDR_WIDTH(TXHDR_WIDTH),
                     .RXHDR_WIDTH(RXHDR_WIDTH),
@@ -269,8 +273,8 @@ module bwa_mem_sw #(parameter TXHDR_WIDTH=61, RXHDR_WIDTH=18, DATA_WIDTH =512)
             test_array #(
                 .TBB_DATA_WIDTH(TBB_RD_DATA_WIDTH),
                 .TBB_ADDR_WIDTH(TBB_RD_ADDR_WIDTH),
-                .RBB_DATA_WIDTH(RBB_DATA_WIDTH),
-                .RBB_ADDR_WIDTH(RBB_ADDR_WIDTH)
+                .RBB_DATA_WIDTH(RBB_WR_DATA_WIDTH),
+                .RBB_ADDR_WIDTH(RBB_WR_ADDR_WIDTH)
             )
             pe_array (
                 .clk                (clk),
@@ -278,8 +282,8 @@ module bwa_mem_sw #(parameter TXHDR_WIDTH=61, RXHDR_WIDTH=18, DATA_WIDTH =512)
                 .bm2pe_start        (bm2pe_start_b[i]),
                 .pe2bm_done         (pe2bm_done_b[i]),
                 .pe2bm_rbbWrEn      (pe2bm_rbbWrEn_b[i]),
-                .pe2bm_rbbWrAddr    (pe2bm_rbbWrAddr_b[i*RBB_ADDR_WIDTH+RBB_ADDR_WIDTH-1:i*RBB_ADDR_WIDTH]),
-                .pe2bm_rbbWrDin     (pe2bm_rbbWrDin_b[i*RBB_DATA_WIDTH+RBB_DATA_WIDTH-1:i*RBB_DATA_WIDTH]),
+                .pe2bm_rbbWrAddr    (pe2bm_rbbWrAddr_b[i*RBB_WR_ADDR_WIDTH+RBB_WR_ADDR_WIDTH-1:i*RBB_WR_ADDR_WIDTH]),
+                .pe2bm_rbbWrDin     (pe2bm_rbbWrDin_b[i*RBB_WR_DATA_WIDTH+RBB_WR_DATA_WIDTH-1:i*RBB_WR_DATA_WIDTH]),
                 .pe2bm_tbbRdAddr    (pe2bm_tbbRdAddr_b[i*TBB_RD_ADDR_WIDTH+TBB_RD_ADDR_WIDTH-1:i*TBB_RD_ADDR_WIDTH]),
                 .bm2pe_tbbRdDout    (bm2pe_tbbRdDout_b[i*TBB_RD_DATA_WIDTH+TBB_RD_DATA_WIDTH-1:i*TBB_RD_DATA_WIDTH])
             );

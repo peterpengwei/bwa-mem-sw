@@ -9,7 +9,7 @@
 //                      it instantiates rbb_bram
 // ***************************************************************************
 
-module rbb #(parameter RBB_ADDR_WIDTH=8, RBB_DATA_WIDTH=512)
+module rbb #(parameter RBB_RD_ADDR_WIDTH=8, RBB_RD_DATA_WIDTH=512, RBB_WR_ADDR_WIDTH=12, RBB_WR_DATA_WIDTH=32)
 (
     // ---------------------------global signals-------------------------------------------------
     clk,                              //              in    std_logic;  -- Core clock
@@ -29,31 +29,31 @@ module rbb #(parameter RBB_ADDR_WIDTH=8, RBB_DATA_WIDTH=512)
     TestCmp
 );
 
-    input                           clk;                  //              in    std_logic;  -- Core clock
-    input                           reset_n;              //              in    std_logic;  -- Use SPARINGLY only for control
-    input                           task_done;
-    input                           ReqAck;
-    input                           WrEn;
-    input   [RBB_ADDR_WIDTH-1:0]    WrAddr;
-    input   [RBB_DATA_WIDTH-1:0]    WrDin;
-    input   [RBB_ADDR_WIDTH-1:0]    RdAddr;
+    input                               clk;                  //              in    std_logic;  -- Core clock
+    input                               reset_n;              //              in    std_logic;  -- Use SPARINGLY only for control
+    input                               task_done;
+    input                               ReqAck;
+    input                               WrEn;
+    input   [RBB_WR_ADDR_WIDTH-1:0]     WrAddr;
+    input   [RBB_WR_DATA_WIDTH-1:0]     WrDin;
+    input   [RBB_RD_ADDR_WIDTH-1:0]     RdAddr;
     
-    output                          Full;
-    output                          Empty;
-    output  [RBB_ADDR_WIDTH-1:0]    ReqLineIdx;
-    output                          ReqValid;
-    output  [RBB_DATA_WIDTH-1:0]    RdDout;
-    output                          TestCmp;
+    output                              Full;
+    output                              Empty;
+    output  [RBB_RD_ADDR_WIDTH-1:0]     ReqLineIdx;
+    output                              ReqValid;
+    output  [RBB_RD_DATA_WIDTH-1:0]     RdDout;
+    output                              TestCmp;
 
-    reg [1:0]                   cur_state;
-    reg [1:0]                   next_state;
-    reg [RBB_ADDR_WIDTH-1:0]    rd_counter_d;
-    reg [RBB_ADDR_WIDTH-1:0]    rd_counter;
-    reg                         TestCmp;
+    reg     [1:0]                       cur_state;
+    reg     [1:0]                       next_state;
+    reg     [RBB_RD_ADDR_WIDTH-1:0]     rd_counter_d;
+    reg     [RBB_RD_ADDR_WIDTH-1:0]     rd_counter;
+    reg                                 TestCmp;
 
     localparam IDLE         = 'b01;
     localparam WRITE        = 'b10;
-    localparam NUM_LINES    = (1 << RBB_ADDR_WIDTH);
+    localparam NUM_LINES    = (1 << RBB_RD_ADDR_WIDTH);
 
     //-------------------------
     //STATE_MACHINE
@@ -104,24 +104,42 @@ module rbb #(parameter RBB_ADDR_WIDTH=8, RBB_DATA_WIDTH=512)
     wire Full       = (cur_state == WRITE);
     wire Empty      = ~Full;
     wire ReqValid   = (cur_state == WRITE);
+    
+    reg                                 WrEn_BRAM;
+    reg  [RBB_RD_DATA_WIDTH-1:0]        WrDin_BRAM;
+    reg  [RBB_RD_ADDR_WIDTH-1:0]        WrAddr_BRAM;
+    wire [3:0]                          WrAddr_Low  = WrAddr[3:0];
 
-    wire    [RBB_ADDR_WIDTH-1:0] RdAddrBRAM = (cur_state == IDLE && next_state == WRITE) ? 'b0 : rd_counter + 'b1;
-    reg     [RBB_ADDR_WIDTH-1:0] RdAddrBRAM_r;
+    always @ (posedge clk)
+    begin
+        if (~reset_n) begin
+            WrEn_BRAM       <= 'b0;
+            WrDin_BRAM      <= 'b0;
+            WrAddr_BRAM     <= 'b0;
+        end else begin
+            WrDin_BRAM      <= {WrDin_BRAM[RBB_RD_DATA_WIDTH-RBB_WR_DATA_WIDTH-1:0], WrDin};
+            WrAddr_BRAM     <= WrAddr[RBB_WR_ADDR_WIDTH-1:4];
+            if (WrAddr_Low == 4'b1111) begin
+                WrEn_BRAM   <= WrEn;
+            end
+        end
+    end
+
+    wire    [RBB_RD_ADDR_WIDTH-1:0]        RdAddrBRAM = (cur_state == IDLE && next_state == WRITE) ? 'b0 : rd_counter + 'b1;
+    reg     [RBB_RD_ADDR_WIDTH-1:0]        RdAddrBRAM_r;
     
     always @ (posedge clk)
     begin
         RdAddrBRAM_r <= RdAddrBRAM;
     end
-    
-    wire [RBB_DATA_WIDTH-1:0] RdDataBRAM;
 
-
-    reg [RBB_ADDR_WIDTH-1:0] ReqLineIdx;
-    reg [RBB_ADDR_WIDTH-1:0] ReqLineIdx_r;
-    reg [RBB_DATA_WIDTH-1:0] RdDout;
-    reg [RBB_DATA_WIDTH-1:0] RdDout_r;
-    reg task_done_r;
-    reg ReqAck_r;
+    wire    [RBB_RD_DATA_WIDTH-1:0]     RdDataBRAM;
+    reg     [RBB_RD_ADDR_WIDTH-1:0]     ReqLineIdx;
+    reg     [RBB_RD_ADDR_WIDTH-1:0]     ReqLineIdx_r;
+    reg     [RBB_RD_DATA_WIDTH-1:0]     RdDout;
+    reg     [RBB_RD_DATA_WIDTH-1:0]     RdDout_r;
+    reg                                 task_done_r;
+    reg                                 ReqAck_r;
     
     always @ (posedge clk)
     begin
@@ -174,15 +192,15 @@ module rbb #(parameter RBB_ADDR_WIDTH=8, RBB_DATA_WIDTH=512)
     ////----------------------------------------------------------------------------------------------------------------------------------------------
     ////                                                              Instances
     ////----------------------------------------------------------------------------------------------------------------------------------------------
-    nlb_gram_sdp #(.BUS_SIZE_ADDR(RBB_ADDR_WIDTH),
-                   .BUS_SIZE_DATA(RBB_DATA_WIDTH),
+    nlb_gram_sdp #(.BUS_SIZE_ADDR(RBB_RD_ADDR_WIDTH),
+                   .BUS_SIZE_DATA(RBB_RD_DATA_WIDTH),
                    .GRAM_MODE(2'd1)
     )rbb_bram 
     (
         .clk  (clk),
-        .we   (WrEn),
-        .waddr(WrAddr),
-        .din  (WrDin),
+        .we   (WrEn_BRAM),
+        .waddr(WrAddr_BRAM),
+        .din  (WrDin_BRAM),
         .raddr(RdAddrBRAM),
         .dout (RdDataBRAM)
     );     

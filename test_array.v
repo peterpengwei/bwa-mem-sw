@@ -6,7 +6,7 @@
 // buffer.
 //
 
-module test_array #(parameter TBB_DATA_WIDTH=32, TBB_ADDR_WIDTH=16, RBB_DATA_WIDTH=512, RBB_ADDR_WIDTH=8)
+module test_array #(parameter TBB_DATA_WIDTH=32, TBB_ADDR_WIDTH=16, RBB_DATA_WIDTH=32, RBB_ADDR_WIDTH=12)
 (
     clk,
     reset_n,
@@ -35,7 +35,7 @@ module test_array #(parameter TBB_DATA_WIDTH=32, TBB_ADDR_WIDTH=16, RBB_DATA_WID
     output  [TBB_ADDR_WIDTH-1:0]    pe2bm_tbbRdAddr;
     input   [TBB_DATA_WIDTH-1:0]    bm2pe_tbbRdDout;
 
-    localparam  writeback       = 512'hdead_beef;
+    localparam  writeback       = 32'hdead_beef;
     localparam  NUM_WRITES      = 1 << RBB_ADDR_WIDTH;
     localparam  NUM_READS       = 1 << TBB_ADDR_WIDTH;
 
@@ -76,7 +76,7 @@ module test_array #(parameter TBB_DATA_WIDTH=32, TBB_ADDR_WIDTH=16, RBB_DATA_WID
                 rd_start    <= 'b0;
             end
             if (wr_start) begin
-                wr_data     <= {512'h0000, wr_counter_d};
+                wr_data     <= {20'b0, wr_counter_d};
             end
         end
     end
