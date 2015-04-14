@@ -251,18 +251,26 @@ module bwa_mem_sw #(parameter TXHDR_WIDTH=61, RXHDR_WIDTH=18, DATA_WIDTH =512)
 
     // generate
     //     genvar i;
-    //       for (i=0; i<NUM_PEA; i=i+1) begin
-    //         pe_array pe_array(
-    //            .clk               (clk),
-    //            .reset_n           (reset_n),
-    //            .pe2bm_rbbWrEn     (pe2bm_rbbWrEn_b[i]),
-    //            .pe2bm_rbbWrAddr   (pe2bm_rbbWrAddr_b[i*RBB_ADDR_WIDTH+RBB_ADDR_WIDTH-1:i*RBB_ADDR_WIDTH]),
-    //            .pe2bm_rbbWrDin    (pe2bm_rbbWrDin_b[i*RBB_DATA_WIDTH+RBB_DATA_WIDTH-1:i*RBB_DATA_WIDTH]),
-    //            .bm2pe_rbbFull     (bm2pe_rbbFull_b[i]),
-    //            .pe2bm_tbbRdEn     (pe2bm_tbbRdEn_b[i]),
-    //            .pe2bm_tbbRdAddr   (pe2bm_tbbRdAddr_b[i*TBB_ADDR_WIDTH+TBB_ADDR_WIDTH-1:i*TBB_ADDR_WIDTH]),
-    //            .bm2pe_tbbRdDout   (bm2pe_tbbRdDout_b[i*TBB_DATA_WIDTH+TBB_DATA_WIDTH-1:i*TBB_DATA_WIDTH]),
-    //            .bm2pe_tbbEmpty    (bm2pe_tbbEmpty_b[i])
+    //       for (i = 0; i < NUM_PEA; i = i + 1) begin
+    //         sw_pe_array sw_pe_array(
+    //            .ap_clk            (clk),
+    //            .ap_reset          (reset_n),
+    //            .ap_start          (bm2pe_start_b[i]),
+    //            .ap_done           (pe2bm_done_b[i]),
+    //            .ap_idle           (),
+    //            .ap_ready          (),
+    //            .ResData_we0       (pe2bm_rbbWrEn_b[i]),
+    //            .ResData_ce0       (),
+    //            .ResData_address0  (pe2bm_rbbWrAddr_b[i*RBB_ADDR_WIDTH+RBB_ADDR_WIDTH-1:i*RBB_ADDR_WIDTH]),
+    //            .ResData_q0        (),
+    //            .ResData_d0        (pe2bm_rbbWrDin_b[i*RBB_DATA_WIDTH+RBB_DATA_WIDTH-1:i*RBB_DATA_WIDTH]),
+    //            // .bm2pe_rbbFull     (bm2pe_rbbFull_b[i]),
+    //            .InData_we0        (pe2bm_tbbRdEn_b[i]),
+    //            .InData_ce0        (),
+    //            .InData_address0   (pe2bm_tbbRdAddr_b[i*TBB_ADDR_WIDTH+TBB_ADDR_WIDTH-1:i*TBB_ADDR_WIDTH]),
+    //            .InData_q0         (bm2pe_tbbRdDout_b[i*TBB_DATA_WIDTH+TBB_DATA_WIDTH-1:i*TBB_DATA_WIDTH]),
+    //            .InData_d0         ()
+    //            // .bm2pe_tbbEmpty    (bm2pe_tbbEmpty_b[i])
     //     	); 
     //     end
     // endgenerate

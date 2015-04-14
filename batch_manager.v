@@ -267,60 +267,62 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
     wire [NUM_PEA-1:0]                      rbbTestCmp_b;
     wire                                    bm_TestCmp;
 
-    assign rbbWrEn_b                      = pe2bm_rbbWrEn_b;
-    assign rbbWrAddr_b                    = pe2bm_rbbWrAddr_b;
-    assign rbbWrDin_b                     = pe2bm_rbbWrDin_b;
-    assign bm_TestCmp                     = rbbTestCmp_b[0];        // FIXME
+    assign rbbWrEn_b              = pe2bm_rbbWrEn_b;
+    assign rbbWrAddr_b            = pe2bm_rbbWrAddr_b;
+    assign rbbWrDin_b             = pe2bm_rbbWrDin_b;
+    assign bm_TestCmp             = |rbbTestCmp_b;          // Write to DSM reg signal 
     
-    reg  [DATA_WIDTH-1:0]   cf2ci_C1TxData;
-    reg  [TXHDR_WIDTH-1:0]  cf2ci_C1TxHdr;
-    reg                     cf2ci_C1TxWrValid;
-    reg  [TXHDR_WIDTH-1:0]  cf2ci_C0TxHdr;
-    reg                     cf2ci_C0TxRdValid;
+    reg     [DATA_WIDTH-1:0]        cf2ci_C1TxData;
+    reg     [TXHDR_WIDTH-1:0]       cf2ci_C1TxHdr;
+    reg                             cf2ci_C1TxWrValid;
+    reg     [TXHDR_WIDTH-1:0]       cf2ci_C0TxHdr;
+    reg                             cf2ci_C0TxRdValid;
     
-    reg                     dsm_base_valid;
-    reg                     dsm_base_valid_q;
-    reg                     afuid_updtd;
-    reg                     status_write;
+    reg                             dsm_base_valid;
+    reg                             dsm_base_valid_q;
+    reg                             afuid_updtd;
+    reg                             status_updtd;
     
-    reg   [63:0]            cr_dsm_base;                            // a00h, a04h - DSM base address
-    reg   [31:0]            cr_src_address;                         // a20h - source buffer address
-    reg   [31:0]            cr_dst_address;                         // a24h - destn buffer address
-    reg   [31:0]            cr_num_batches;                         // a28h - Number of batches available for processing
-    reg   [31:0]            cr_ctl = 0;                             // a2ch - control register to start and stop the test
-    wire                    test_go         = cr_ctl[1];            // When 0, it allows reconfiguration of test parameters.
+    reg     [63:0]                  cr_dsm_base;            // a00h, a04h - DSM base address
+    reg     [31:0]                  cr_src_address;         // a20h - source buffer address
+    reg     [31:0]                  cr_dst_address;         // a24h - destn buffer address
+    reg     [31:0]                  cr_num_batches;         // a28h - Number of batches available for processing
+    reg     [31:0]                  cr_ctl  = 0;            // a2ch - control register to start and stop the test
+    wire                            test_go = cr_ctl[1];    // When 0, it allows reconfiguration of test parameters.
 
     //register for storing number of task batches that get received
-    reg [31:0]      NumBatchesRecv;
-    reg [31:0]      NumBatchesRecv_d;
+    reg     [31:0]                  NumBatchesRecv;
+    reg     [31:0]                  NumBatchesRecv_d;
+    reg     [31:0]                  NumBatchesDone;
+    reg     [31:0]                  NumBatchesDone_d;
     //pointer to TBB
-    reg [POINTER_WIDTH-1:0]   tbb_pointer;
-    reg [POINTER_WIDTH-1:0]   tbb_pointer_d;
+    reg     [POINTER_WIDTH-1:0]     tbb_pointer;
+    reg     [POINTER_WIDTH-1:0]     tbb_pointer_d;
     //pointer to RBB
-    reg [POINTER_WIDTH-1:0]   rbb_pointer;
-    reg [POINTER_WIDTH-1:0]   rbb_pointer_d;
+    reg     [POINTER_WIDTH-1:0]     rbb_pointer;
+    reg     [POINTER_WIDTH-1:0]     rbb_pointer_d;
 
     //CCI Read Address Offset
-    reg [TBB_WR_ADDR_WIDTH-1:0] RdAddrOffset;
-    reg [TBB_WR_ADDR_WIDTH-1:0] RdAddrOffset_d;
+    reg     [TBB_WR_ADDR_WIDTH-1:0] RdAddrOffset;
+    reg     [TBB_WR_ADDR_WIDTH-1:0] RdAddrOffset_d;
     //CCI Read ID
-    reg [13:0]      RdReqId;
+    reg     [13:0]                  RdReqId;
     //CCI Read Type
-    wire [3:0]      rdreq_type = RdLine;
+    wire    [3:0]                   rdreq_type = RdLine;
 
     //CCI Write Address Offset
-    reg [RBB_WR_ADDR_WIDTH-1:0] WrAddrOffset;
-    reg [RBB_WR_ADDR_WIDTH-1:0] WrAddrOffset_d;
+    reg     [RBB_RD_ADDR_WIDTH-1:0] WrAddrOffset;
+    reg     [RBB_RD_ADDR_WIDTH-1:0] WrAddrOffset_d;
     //CCI Write ID
-    reg [13:0]      WrReqId;
+    reg     [13:0]                  WrReqId;
     //CCI Write Type
-    wire [3:0]      wrreq_type = WrLine;
+    wire    [3:0]                   wrreq_type = WrLine;
 
-    wire   [31:0]            ds_afuid_address = dsm_offset2addr(DSM_AFU_ID,cr_dsm_base);          // 0h - afu id is written to this address
-    wire   [31:0]            ds_stat_address = dsm_offset2addr(DSM_STATUS,cr_dsm_base);           // 40h - test status is written to this address
-    wire                     re2xy_go = test_go & afuid_updtd & ci2cf_InitDn;         // After initializing DSM, we can do actual tasks on AFU
-    reg          WrHdr_valid;                 // 1: Valid Write Request
-    reg          RdHdr_valid;                 // 1: Valid Read Request
+    wire    [31:0]                  ds_afuid_address = dsm_offset2addr(DSM_AFU_ID,cr_dsm_base);     // 0h - afu id is written to this address
+    wire    [31:0]                  ds_stat_address = dsm_offset2addr(DSM_STATUS,cr_dsm_base);      // 40h - test status is written to this address
+    wire                            re2xy_go = test_go & afuid_updtd & ci2cf_InitDn;                // After initializing DSM, we can do actual tasks on AFU
+    reg                             WrHdr_valid;                                                    // 1: Valid Write Request
+    reg                             RdHdr_valid;                                                    // 1: Valid Read Request
 
     //-------------------------
     //CSR Register Handling
@@ -361,7 +363,8 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                 if(rb2cf_C0RxCfgValid)
                 case({rb2cf_C0RxHdr[13:0],2'b00})         /* synthesis parallel_case */
                     //cr_num_batches corresponds to the number of task batches available for processing
-                    CSR_NUM_BATCHES:     cr_num_batches     <= cr_num_batches + 'b1;
+                    // CSR_NUM_BATCHES:     cr_num_batches     <= cr_num_batches + 'b1;
+                    CSR_NUM_BATCHES:    cr_num_batches      <= rb2cf_C0RxData[31:0];
                 endcase
             end
         end
@@ -377,36 +380,42 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
         if (!reset_n)
         begin
             NumBatchesRecv  <= 'b0;
+            NumBatchesDone  <= 'b0;
             tbb_pointer     <= 'b0;
             rbb_pointer     <= 'b0;
             RdAddrOffset    <= 'b0;
             WrAddrOffset    <= 'b0;
-            status_write    <= 'b0;
+            status_updtd    <= 'b0;
         end
         else
         begin
             NumBatchesRecv  <= NumBatchesRecv_d;
+            NumBatchesDone  <= NumBatchesDone_d;
             tbb_pointer     <= tbb_pointer_d;
             rbb_pointer     <= rbb_pointer_d;
             RdAddrOffset    <= RdAddrOffset_d;
             WrAddrOffset    <= WrAddrOffset_d;
+            if (bm_TestCmp) begin
+                status_updtd <= 'b0;
+            end
         end
     end
 
     // Combinatorial Logic
     always @ (*) 
     begin
-        tbb_pointer_d = tbb_pointer;
-        rbb_pointer_d = rbb_pointer;
-        RdAddrOffset_d = RdAddrOffset;
-        WrAddrOffset_d = WrAddrOffset;
-        NumBatchesRecv_d = NumBatchesRecv;
-        RdHdr_valid = 'b0;
-        WrHdr_valid = 'b0;
-        tbbReqAck_b = 'b0;
-        rbbReqAck_b = 'b0;
-        RdReqId = 'b0;
-        WrReqId = 'b0;
+        tbb_pointer_d       = tbb_pointer;
+        rbb_pointer_d       = rbb_pointer;
+        RdAddrOffset_d      = RdAddrOffset;
+        WrAddrOffset_d      = WrAddrOffset;
+        NumBatchesRecv_d    = NumBatchesRecv;
+        NumBatchesDone_d    = NumBatchesDone;
+        RdHdr_valid         = 'b0;
+        WrHdr_valid         = 'b0;
+        tbbReqAck_b         = 'b0;
+        rbbReqAck_b         = 'b0;
+        RdReqId             = 'b0;
+        WrReqId             = 'b0;
       
         if (re2xy_go) //During the real execution state, do the modification on these registers
         begin
@@ -574,6 +583,9 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                 end
             endcase
 
+            //-----------------------
+            // RBB round-robin
+            //-----------------------
             //rbb handler
             case(rbb_pointer)         /* synthesis parallel_case */
                 'b0:
@@ -613,6 +625,9 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                                 rbb_pointer_d = rbb_pointer + 'b1;
                         end
                     end
+                    if (rbbTestCmp_b[0]) begin
+                        NumBatchesDone_d = NumBatchesDone + 'b1;
+                    end
                 end
                 'b1:
                 begin
@@ -651,6 +666,9 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                                 rbb_pointer_d = rbb_pointer + 'b1;
                         end
                     end
+                    if (rbbTestCmp_b[1]) begin
+                        NumBatchesDone_d = NumBatchesDone + 'b1;
+                    end
                 end
                 'b10:
                 begin
@@ -683,11 +701,14 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                         //Question: How to let CPU know it?
                         else
                         begin
-                        if (rbb_pointer == (NUM_PEA-1))
-                            rbb_pointer_d = 'b0;
-                        else
-                            rbb_pointer_d = rbb_pointer + 'b1;
+                            if (rbb_pointer == (NUM_PEA-1))
+                                rbb_pointer_d = 'b0;
+                            else
+                                rbb_pointer_d = rbb_pointer + 'b1;
                         end
+                    end
+                    if (rbbTestCmp_b[2]) begin
+                        NumBatchesDone_d = NumBatchesDone + 'b1;
                     end
                 end
                 'b11:
@@ -727,17 +748,19 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                                 rbb_pointer_d = rbb_pointer + 'b1;
                         end
                     end
+                    if (rbbTestCmp_b[3]) begin
+                        NumBatchesDone_d = NumBatchesDone + 'b1;
+                    end
                 end
             endcase
         end
     end
 
     //-------------------------
-    //Handle CCI Tx Channels
+    // Handle CCI Tx Channels
     //-------------------------
-    
-        // Format Read Header
-    wire [31:0]             RdAddr  = cr_src_address ^ RdAddrOffset;
+    // Format Read Header
+    wire [31:0]             RdAddr  = cr_src_address ^ {NumBatchesRecv[31-TBB_WR_ADDR_WIDTH:0], RdAddrOffset};
     wire [TXHDR_WIDTH-1:0]  RdHdr   = {
                                         5'h00,                          // [60:56]      Byte Enable
                                         rdreq_type,                     // [55:52]      Request Type
@@ -747,7 +770,7 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                                       };
     
         // Format Write Header
-    wire [31:0]             WrAddr      = cr_dst_address + WrAddrOffset;
+    wire [31:0]             WrAddr  = cr_dst_address ^ {NumBatchesDone[31-RBB_RD_ADDR_WIDTH:0], WrAddrOffset};
     reg [DATA_WIDTH-1:0]   WrData;
     always @(*)
     begin
@@ -813,40 +836,37 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                 end
                 else if (re2xy_go)  //Executing real tasks
                 begin
-                    if( bm_TestCmp                                                  // Update Status upon test completion
-                        ||cr_ctl[2]                                                 // SW forced test termination
-                    )                       
-                    begin                                                           //-----------------------------------
-                        status_write       <= 1'b1;
-                        if(status_write==0)
-                            cf2ci_C1TxWrValid  <= 1'b1;
-                            // cf2ci_C1TxHdr      <= {
-                            //                             5'h0,                           // [60:56]      Byte Enable
-                            //                             cr_wrthru_en? WrThru            // [55:52]      Req Type
-                            //                                         : WrLine,           //
-                            //                             6'h00,                          // [51:46]      Rsvd
-                            //                             ds_stat_address,                // [44:14]      Address
-                            //                             14'h3fff                        // [13:0]       Meta data to track the SPL requests
-                            //                         };
-                            // cf2ci_C1TxData     <= {     ab2re_ErrorInfo,                // [511:256] upper half cache line
-                            //                             24'h00_0000,penalty_end,        // [255:224] test end overhead in # clks
-                            //                             24'h00_0000,penalty_start,      // [223:192] test start overhead in # clks
-                            //                             Num_Writes,                     // [191:160] Total number of Writes sent
-                            //                             Num_Reads,                      // [159:128] Total number of Reads sent
-                            //                             Num_ticks_high, Num_ticks_low,  // [127:64]  number of clks
-                            //                             ErrorVector,                    // [63:32]   errors detected            
-                            //                             32'h0000_0001                   // [31:0]    test completion flag
-                            //                         };
-                            cf2ci_C1TxHdr       <= {
-                                                        5'h0,
-                                                        WrLine,
-                                                        6'h00,
-                                                        ds_stat_address,
-                                                        14'h3fff
-                                                    };
-                            cf2ci_C1TxData      <= {
-                                                        512'h0001
-                                                    };
+                    if(status_updtd==0) begin
+                        status_updtd       <= 1'b1;
+                        cf2ci_C1TxWrValid  <= 1'b1;
+                        // cf2ci_C1TxHdr      <= {
+                        //                             5'h0,                           // [60:56]      Byte Enable
+                        //                             cr_wrthru_en? WrThru            // [55:52]      Req Type
+                        //                                         : WrLine,           //
+                        //                             6'h00,                          // [51:46]      Rsvd
+                        //                             ds_stat_address,                // [44:14]      Address
+                        //                             14'h3fff                        // [13:0]       Meta data to track the SPL requests
+                        //                         };
+                        // cf2ci_C1TxData     <= {     ab2re_ErrorInfo,                // [511:256] upper half cache line
+                        //                             24'h00_0000,penalty_end,        // [255:224] test end overhead in # clks
+                        //                             24'h00_0000,penalty_start,      // [223:192] test start overhead in # clks
+                        //                             Num_Writes,                     // [191:160] Total number of Writes sent
+                        //                             Num_Reads,                      // [159:128] Total number of Reads sent
+                        //                             Num_ticks_high, Num_ticks_low,  // [127:64]  number of clks
+                        //                             ErrorVector,                    // [63:32]   errors detected            
+                        //                             32'h0000_0001                   // [31:0]    test completion flag
+                        //                         };
+                        cf2ci_C1TxHdr       <= {
+                                                    5'h0,
+                                                    WrLine,
+                                                    6'h00,
+                                                    ds_stat_address,
+                                                    14'h3fff
+                                                };
+                        cf2ci_C1TxData      <= {
+                                                    480'h0000,
+                                                    NumBatchesDone                  // Write NumBatchesDone to DSM for software polling
+                                                };
                     end else if( WrHdr_valid )                                          // Write to Destination Workspace
                     begin                                                               //-------------------------------------
                         cf2ci_C1TxHdr     <= WrHdr;
