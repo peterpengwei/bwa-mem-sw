@@ -117,7 +117,7 @@ module rbb #(parameter RBB_RD_ADDR_WIDTH=8, RBB_RD_DATA_WIDTH=512, RBB_WR_ADDR_W
             WrEn_BRAM       <= 'b0;
             WrDin_BRAM      <= 'b0;
             WrAddr_BRAM     <= 'b0;
-        end else begin
+        end else if (WrEn) begin
             WrDin_BRAM      <= {WrDin_BRAM[RBB_RD_DATA_WIDTH-RBB_WR_DATA_WIDTH-1:0], WrDin};    // rotate and append 
             WrAddr_BRAM     <= WrAddr[RBB_WR_ADDR_WIDTH-1:4];                                   // higher 8-bit address is taken
             if (WrAddr_Low == 4'b1111) begin                                                    // lower 4-bit is used as local address
