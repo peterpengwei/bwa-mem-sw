@@ -107,8 +107,8 @@ module rbb #(parameter RBB_RD_ADDR_WIDTH=8, RBB_RD_DATA_WIDTH=512, RBB_WR_ADDR_W
     
     reg                                 WrEn_BRAM;
     reg  [RBB_RD_DATA_WIDTH-1:0]        WrDin_BRAM;
-    reg  [RBB_RD_ADDR_WIDTH-1:0]        WrAddr_BRAM;
     wire [3:0]                          WrAddr_Low  = WrAddr[3:0];
+    reg  [RBB_WR_ADDR_WIDTH-5:0]        WrAddr_BRAM;
 
     // glue 16 32-bit inputs into a 512-bit input
     always @ (posedge clk)
@@ -117,11 +117,15 @@ module rbb #(parameter RBB_RD_ADDR_WIDTH=8, RBB_RD_DATA_WIDTH=512, RBB_WR_ADDR_W
             WrEn_BRAM       <= 'b0;
             WrDin_BRAM      <= 'b0;
             WrAddr_BRAM     <= 'b0;
-        end else if (WrEn) begin
-            WrDin_BRAM      <= {WrDin_BRAM[RBB_RD_DATA_WIDTH-RBB_WR_DATA_WIDTH-1:0], WrDin};    // rotate and append 
-            WrAddr_BRAM     <= WrAddr[RBB_WR_ADDR_WIDTH-1:4];                                   // higher 8-bit address is taken
-            if (WrAddr_Low == 4'b1111) begin                                                    // lower 4-bit is used as local address
-                WrEn_BRAM   <= WrEn;
+        end else begin
+            if (WrEn) begin
+                WrDin_BRAM  <= {WrDin_BRAM[RBB_RD_DATA_WIDTH-RBB_WR_DATA_WIDTH-1:0], WrDin};    // rotate and append 
+            end
+            if (WrEn && WrAddr_Low == 4'b1111) begin
+                WrEn_BRAM   <= 'b1;
+                WrAddr_BRAM <= WrAddr[RBB_WR_ADDR_WIDTH-1:4];
+            end else begin
+                WrEn_BRAM   <= 'b0;
             end
         end
     end
