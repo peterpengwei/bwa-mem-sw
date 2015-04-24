@@ -388,7 +388,6 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
             rbb_pointer     <= 'b0;
             RdAddrOffset    <= 'b0;
             WrAddrOffset    <= 'b0;
-            status_updtd    <= 'b0;
         end
         else
         begin
@@ -398,9 +397,6 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
             rbb_pointer     <= rbb_pointer_d;
             RdAddrOffset    <= RdAddrOffset_d;
             WrAddrOffset    <= WrAddrOffset_d;
-            if (bm_TestCmp) begin
-                status_updtd <= 'b0;
-            end
         end
     end
 
@@ -807,6 +803,7 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
             cf2ci_C0TxHdr           <= 'b0;
             cf2ci_C0TxRdValid       <= 'b0;
             dsm_base_valid_q        <= 'b0;
+            status_updtd            <= 'b0;
         end
         else
         begin 
@@ -816,6 +813,10 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
             cf2ci_C1TxWrValid       <= 0;
             cf2ci_C0TxHdr           <= 0;
             cf2ci_C0TxRdValid       <= 0;
+
+            if (bm_TestCmp) begin
+                status_updtd <= 'b0;
+            end
 
             // Channel 1
             if(ci2cf_C1TxAlmFull==0)
