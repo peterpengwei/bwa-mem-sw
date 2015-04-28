@@ -952,7 +952,7 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
         // TBB Generation
         //-------------------------
 
-        for (i=0; i<NUM_PEA; i=i+1) begin
+        for (i=0; i<NUM_PEA; i=i+1) begin: TBB
             tbb #(.TBB_WR_ADDR_WIDTH(TBB_WR_ADDR_WIDTH),
                   .TBB_WR_DATA_WIDTH(TBB_WR_DATA_WIDTH),
                   .TBB_RD_ADDR_WIDTH(TBB_RD_ADDR_WIDTH),
@@ -982,7 +982,7 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
         // RBB Generation
         //-------------------------
 
-        for (i=0; i<NUM_PEA; i=i+1) begin
+        for (i=0; i<NUM_PEA; i=i+1) begin: RBB
             rbb #(.RBB_WR_ADDR_WIDTH(RBB_WR_ADDR_WIDTH),
                   .RBB_WR_DATA_WIDTH(RBB_WR_DATA_WIDTH),
                   .RBB_RD_ADDR_WIDTH(RBB_RD_ADDR_WIDTH),

@@ -251,7 +251,7 @@ module bwa_mem_sw #(parameter TXHDR_WIDTH=61, RXHDR_WIDTH=18, DATA_WIDTH =512)
 
     generate
         genvar i;
-          for (i = 0; i < NUM_PEA; i = i + 1) begin
+          for (i = 0; i < NUM_PEA; i = i + 1) begin: PE_ARRAYS
             sw_pe_array sw_pe_array(
                .ap_clk            (clk),
                .ap_rst            (~reset_n),
