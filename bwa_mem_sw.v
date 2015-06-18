@@ -160,13 +160,13 @@ module bwa_mem_sw #(parameter TXHDR_WIDTH=61, RXHDR_WIDTH=18, DATA_WIDTH =512)
     input                        ci2cf_InitDn;         //                  cci_intf:           Link initialization is complete
 
     localparam  NUM_PEA             = 4;
-    localparam  TBB_WR_ADDR_WIDTH   = 7;
+    localparam  TBB_WR_ADDR_WIDTH   = 12;
     localparam  TBB_WR_DATA_WIDTH   = 512;
-    localparam  TBB_RD_ADDR_WIDTH   = 11;
+    localparam  TBB_RD_ADDR_WIDTH   = 16;
     localparam  TBB_RD_DATA_WIDTH   = 32;
-    localparam  RBB_WR_ADDR_WIDTH   = 9;
+    localparam  RBB_WR_ADDR_WIDTH   = 12;
     localparam  RBB_WR_DATA_WIDTH   = 32;
-    localparam  RBB_RD_ADDR_WIDTH   = 5;
+    localparam  RBB_RD_ADDR_WIDTH   = 8;
     localparam  RBB_RD_DATA_WIDTH   = 512;
 
 //   localparam      PEND_THRESH = 7;
@@ -187,18 +187,6 @@ module bwa_mem_sw #(parameter TXHDR_WIDTH=61, RXHDR_WIDTH=18, DATA_WIDTH =512)
 //   wire                         test_Resetb;
 
     assign cf2ci_C1TxIntrValid = 'b0;
-
-    wire    [NUM_PEA-1:0]                   bm2pe_start_b;
-    wire    [NUM_PEA-1:0]                   pe2bm_done_b;
-    wire    [NUM_PEA-1:0]                   pe2bm_rbbWrEn_b;
-    wire    [RBB_WR_ADDR_WIDTH*NUM_PEA-1:0] pe2bm_rbbWrAddr_b;
-    wire    [RBB_WR_DATA_WIDTH*NUM_PEA-1:0] pe2bm_rbbWrDin_b;
-    // wire    [NUM_PEA-1:0]			        bm2pe_rbbFull_b;
-
-    // wire    [NUM_PEA-1:0]			        pe2bm_tbbRdEn_b;
-    wire    [TBB_RD_ADDR_WIDTH*NUM_PEA-1:0] pe2bm_tbbRdAddr_b;
-    wire    [TBB_RD_DATA_WIDTH*NUM_PEA-1:0] bm2pe_tbbRdDout_b;
-    wire    [NUM_PEA-1:0]                   bm2pe_tbbEmpty_b;
 
     batch_manager #(.TBB_WR_ADDR_WIDTH(TBB_WR_ADDR_WIDTH),
                     .TBB_WR_DATA_WIDTH(TBB_WR_DATA_WIDTH),
@@ -238,62 +226,7 @@ module bwa_mem_sw #(parameter TXHDR_WIDTH=61, RXHDR_WIDTH=18, DATA_WIDTH =512)
         ci2cf_C0TxAlmFull,                //                     cci_intf:           Tx memory channel 0 almost full
         ci2cf_C1TxAlmFull,                //                     cci_intf:           TX memory channel 1 almost full
 
-        ci2cf_InitDn,                     // Link initialization is complete
-
-        bm2pe_start_b,                    // Start the task
-        pe2bm_done_b,                     // Task done
-        pe2bm_rbbWrEn_b,
-        pe2bm_rbbWrAddr_b,
-        pe2bm_rbbWrDin_b,
-        pe2bm_tbbRdAddr_b,
-        bm2pe_tbbRdDout_b
+        ci2cf_InitDn                      // Link initialization is complete
     );
-
-    generate
-        genvar i;
-          for (i = 0; i < NUM_PEA; i = i + 1) begin: PE_ARRAYS
-            sw_pe_array sw_pe_array(
-               .ap_clk            (clk),
-               .ap_rst            (~reset_n),
-               .ap_start          (bm2pe_start_b[i]),
-               .ap_done           (pe2bm_done_b[i]),
-               .ap_idle           (),
-               .ap_ready          (),
-               .ResData_we0       (pe2bm_rbbWrEn_b[i]),
-               .ResData_ce0       (),
-               .ResData_address0  (pe2bm_rbbWrAddr_b[i*RBB_WR_ADDR_WIDTH+RBB_WR_ADDR_WIDTH-1:i*RBB_WR_ADDR_WIDTH]),
-               .ResData_q0        (),
-               .ResData_d0        (pe2bm_rbbWrDin_b[i*RBB_WR_DATA_WIDTH+RBB_WR_DATA_WIDTH-1:i*RBB_WR_DATA_WIDTH]),
-               .InData_we0        (),
-               .InData_ce0        (),
-               .InData_address0   (pe2bm_tbbRdAddr_b[i*TBB_RD_ADDR_WIDTH+TBB_RD_ADDR_WIDTH-1:i*TBB_RD_ADDR_WIDTH]),
-               .InData_q0         (bm2pe_tbbRdDout_b[i*TBB_RD_DATA_WIDTH+TBB_RD_DATA_WIDTH-1:i*TBB_RD_DATA_WIDTH]),
-               .InData_d0         ()
-        	); 
-        end
-    endgenerate
-
-    // generate
-    //     genvar i;
-    //     for (i = 0; i < NUM_PEA; i = i + 1) begin
-    //         test_array #(
-    //             .TBB_DATA_WIDTH(TBB_RD_DATA_WIDTH),
-    //             .TBB_ADDR_WIDTH(TBB_RD_ADDR_WIDTH),
-    //             .RBB_DATA_WIDTH(RBB_WR_DATA_WIDTH),
-    //             .RBB_ADDR_WIDTH(RBB_WR_ADDR_WIDTH)
-    //         )
-    //         pe_array (
-    //             .clk                (clk),
-    //             .reset_n            (reset_n),
-    //             .bm2pe_start        (bm2pe_start_b[i]),
-    //             .pe2bm_done         (pe2bm_done_b[i]),
-    //             .pe2bm_rbbWrEn      (pe2bm_rbbWrEn_b[i]),
-    //             .pe2bm_rbbWrAddr    (pe2bm_rbbWrAddr_b[i*RBB_WR_ADDR_WIDTH+RBB_WR_ADDR_WIDTH-1:i*RBB_WR_ADDR_WIDTH]),
-    //             .pe2bm_rbbWrDin     (pe2bm_rbbWrDin_b[i*RBB_WR_DATA_WIDTH+RBB_WR_DATA_WIDTH-1:i*RBB_WR_DATA_WIDTH]),
-    //             .pe2bm_tbbRdAddr    (pe2bm_tbbRdAddr_b[i*TBB_RD_ADDR_WIDTH+TBB_RD_ADDR_WIDTH-1:i*TBB_RD_ADDR_WIDTH]),
-    //             .bm2pe_tbbRdDout    (bm2pe_tbbRdDout_b[i*TBB_RD_DATA_WIDTH+TBB_RD_DATA_WIDTH-1:i*TBB_RD_DATA_WIDTH])
-    //         );
-    //     end
-    // endgenerate
 
 endmodule

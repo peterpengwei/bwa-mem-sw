@@ -51,6 +51,9 @@ module rbb #(parameter RBB_RD_ADDR_WIDTH=8, RBB_RD_DATA_WIDTH=512, RBB_WR_ADDR_W
     reg     [RBB_RD_ADDR_WIDTH-1:0]     rd_counter;
     reg                                 TestCmp;
 
+    reg     [2:0]                       task_done_delay; // delay 2 cycles
+    wire                                task_done_r;
+
     localparam IDLE         = 'b01;
     localparam WRITE        = 'b10;
     localparam NUM_LINES    = (1 << RBB_RD_ADDR_WIDTH);
@@ -79,7 +82,7 @@ module rbb #(parameter RBB_RD_ADDR_WIDTH=8, RBB_RD_DATA_WIDTH=512, RBB_WR_ADDR_W
         case(cur_state)         /* synthesis parallel_case */
             IDLE:
             begin
-                if (task_done)
+                if (task_done_delay[0])
                     next_state = WRITE;
                 else
                     next_state = IDLE;
@@ -170,15 +173,20 @@ module rbb #(parameter RBB_RD_ADDR_WIDTH=8, RBB_RD_DATA_WIDTH=512, RBB_WR_ADDR_W
     reg     [RBB_RD_ADDR_WIDTH-1:0]     ReqLineIdx_r;
     reg     [RBB_RD_DATA_WIDTH-1:0]     RdDout;
     reg     [RBB_RD_DATA_WIDTH-1:0]     RdDout_r;
-    reg                                 task_done_r;
     reg                                 ReqAck_r;
+
+    assign task_done_r = task_done_delay[1];
     
     always @ (posedge clk)
     begin
-        ReqLineIdx_r <= ReqLineIdx;
-        RdDout_r <= RdDout;
-        task_done_r <= task_done;
-        ReqAck_r <= ReqAck;
+        if (!reset_n) begin
+            task_done_delay <= 'b0;
+        end else begin
+            ReqLineIdx_r <= ReqLineIdx;
+            RdDout_r <= RdDout;
+            task_done_delay <= {task_done_delay[0], task_done};
+            ReqAck_r <= ReqAck;
+        end
     end
         
     always @ (*)

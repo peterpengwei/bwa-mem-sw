@@ -144,15 +144,7 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
     ci2cf_C0TxAlmFull,                //                     cci_intf:           Tx memory channel 0 almost full
     ci2cf_C1TxAlmFull,                //                     cci_intf:           TX memory channel 1 almost full
 
-    ci2cf_InitDn,                     // Link initialization is complete
-
-    bm2pe_start_b,                    // Start the task
-    pe2bm_done_b,                     // Task done
-    pe2bm_rbbWrEn_b,
-    pe2bm_rbbWrAddr_b,
-    pe2bm_rbbWrDin_b,
-    pe2bm_tbbRdAddr_b,
-    bm2pe_tbbRdDout_b
+    ci2cf_InitDn                      // Link initialization is complete
 );
 
     input                        clk;                  //              in    std_logic;  -- Core clock
@@ -179,14 +171,6 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
     input                        ci2cf_C1TxAlmFull;    //                  cci_intf:           TX memory channel 1 almost full
 
     input                        ci2cf_InitDn;         //                  cci_intf:           Link initialization is complete
-
-    output [NUM_PEA-1:0]                     bm2pe_start_b;
-    input  [NUM_PEA-1:0]                     pe2bm_done_b;
-    input  [NUM_PEA-1:0]                     pe2bm_rbbWrEn_b;
-    input  [RBB_WR_ADDR_WIDTH*NUM_PEA-1:0]   pe2bm_rbbWrAddr_b;
-    input  [RBB_WR_DATA_WIDTH*NUM_PEA-1:0]   pe2bm_rbbWrDin_b;
-    input  [TBB_RD_ADDR_WIDTH*NUM_PEA-1:0]   pe2bm_tbbRdAddr_b;
-    output [TBB_RD_DATA_WIDTH*NUM_PEA-1:0]   bm2pe_tbbRdDout_b;
 
     //----------------------------------------------------------------------------------------------------------------------
     // BWA_MEM_SW AFU ID
@@ -225,7 +209,7 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
     localparam      CSR_AFU_DSM_BASEH    = 16'h1a04;                 // WO - Upper 32-bits of AFU DSM base address.
     localparam      CSR_SRC_ADDR         = 16'h1a20;                 // WO   Reads are targetted to this region 
     localparam      CSR_DST_ADDR         = 16'h1a24;                 // WO   Writes are targetted to this region
-    localparam      CSR_NUM_BATCHES      = 16'h1a28;                 // WO   Numbers of task batches to be read/write
+    localparam      CSR_REQ_PEARRAY      = 16'h1a28;                 // WO   Numbers of task batches to be read/write
     localparam      CSR_CTL              = 16'h1a2c;                 // WO   Control CSR to start n stop the test
     
     //----------------------------------------------------------------------------------
@@ -242,6 +226,9 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
 
     localparam      RDID_ZEROS    = 14 - TBB_WR_ADDR_WIDTH - 2;
     localparam      WRID_ZEROS    = 14 - RBB_RD_ADDR_WIDTH - 2;
+
+    wire [NUM_PEA-1:0]                      bm2pe_start_b;
+    wire [NUM_PEA-1:0]                      pe2bm_done_b;
   
     reg  [NUM_PEA-1:0]                      tbbWrEn_b;
     reg  [TBB_WR_ADDR_WIDTH*NUM_PEA-1:0]    tbbWrAddr_b;
@@ -253,9 +240,6 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
     wire [NUM_PEA-1:0]                      tbbReqValid_b;
     wire [NUM_PEA*TBB_WR_ADDR_WIDTH-1:0]    tbbReqLineIdx_b;
     reg  [NUM_PEA-1:0]                      tbbReqAck_b;
-
-    assign tbbRdAddr_b                    = pe2bm_tbbRdAddr_b;
-    assign bm2pe_tbbRdDout_b              = tbbRdDout_b;
 
     wire [NUM_PEA-1:0]                      rbbWrEn_b;
     wire [RBB_WR_ADDR_WIDTH*NUM_PEA-1:0]    rbbWrAddr_b;
@@ -270,9 +254,6 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
     wire [NUM_PEA-1:0]                      rbbTestCmp_b;
     wire                                    bm_TestCmp;
 
-    assign rbbWrEn_b              = pe2bm_rbbWrEn_b;
-    assign rbbWrAddr_b            = pe2bm_rbbWrAddr_b;
-    assign rbbWrDin_b             = pe2bm_rbbWrDin_b;
     assign bm_TestCmp             = |rbbTestCmp_b;          // Write to DSM reg signal 
     
     reg     [DATA_WIDTH-1:0]        cf2ci_C1TxData;
@@ -285,11 +266,12 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
     reg                             dsm_base_valid_q;
     reg                             afuid_updtd;
     reg                             status_updtd;
+    reg                             status_updtd_d;
     
     reg     [63:0]                  cr_dsm_base;            // a00h, a04h - DSM base address
     reg     [31:0]                  cr_src_address;         // a20h - source buffer address
     reg     [31:0]                  cr_dst_address;         // a24h - destn buffer address
-    reg     [31:0]                  cr_num_batches;         // a28h - Number of batches available for processing
+    reg     [31:0]                  cr_request_pearray;     // a28h - software requests for pearrays
     reg     [31:0]                  cr_ctl  = 0;            // a2ch - control register to start and stop the test
     wire                            test_go = cr_ctl[1];    // When 0, it allows reconfiguration of test parameters.
 
@@ -298,6 +280,8 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
     reg     [31:0]                  NumBatchesRecv_d;
     reg     [31:0]                  NumBatchesDone;
     reg     [31:0]                  NumBatchesDone_d;
+    reg     [NUM_PEA-1:0]           pearray_busy;
+    reg     [NUM_PEA-1:0]           pearray_busy_d;
     //pointer to TBB
     reg     [POINTER_WIDTH-1:0]     tbb_pointer;
     reg     [POINTER_WIDTH-1:0]     tbb_pointer_d;
@@ -337,7 +321,6 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
             cr_dsm_base     <= DEF_DSM_BASE;
             cr_src_address  <= DEF_SRC_ADDR;
             cr_dst_address  <= DEF_DST_ADDR;
-            cr_num_batches  <= 'b0;
             cr_ctl          <= 'b0;
             dsm_base_valid  <= 'b0;
         end
@@ -365,9 +348,7 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
             begin
                 if(rb2cf_C0RxCfgValid)
                 case({rb2cf_C0RxHdr[13:0],2'b00})         /* synthesis parallel_case */
-                    //cr_num_batches corresponds to the number of task batches available for processing
-                    // CSR_NUM_BATCHES:     cr_num_batches     <= cr_num_batches + 'b1;
-                    CSR_NUM_BATCHES:    cr_num_batches      <= rb2cf_C0RxData[31:0];
+                    CSR_REQ_PEARRAY:    cr_request_pearray  <= rb2cf_C0RxData[31:0];
                 endcase
             end
         end
@@ -388,6 +369,7 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
             rbb_pointer     <= 'b0;
             RdAddrOffset    <= 'b0;
             WrAddrOffset    <= 'b0;
+            pearray_busy    <= 'b0;
         end
         else
         begin
@@ -397,6 +379,7 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
             rbb_pointer     <= rbb_pointer_d;
             RdAddrOffset    <= RdAddrOffset_d;
             WrAddrOffset    <= WrAddrOffset_d;
+            pearray_busy    <= pearray_busy_d;
         end
     end
 
@@ -409,12 +392,14 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
         WrAddrOffset_d      = WrAddrOffset;
         NumBatchesRecv_d    = NumBatchesRecv;
         NumBatchesDone_d    = NumBatchesDone;
+        pearray_busy_d      = pearray_busy;
         RdHdr_valid         = 'b0;
         WrHdr_valid         = 'b0;
         tbbReqAck_b         = 'b0;
         rbbReqAck_b         = 'b0;
         RdReqId             = 'b0;
         WrReqId             = 'b0;
+        status_updtd_d      = status_updtd;
       
         if (re2xy_go) //During the real execution state, do the modification on these registers
         begin
@@ -432,7 +417,7 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                     end
                     //If tbb is not full, it can store a valid task
                     //Then, check if there is a valid task to process
-                    else if (NumBatchesRecv != cr_num_batches)
+                    else if (cr_request_pearray[0])
                     begin
                         //We have at least one available batch to process
                         //Then, check if the TBB is willing to read data
@@ -456,7 +441,9 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                                 tbb_pointer_d = 'b0;
                             else
                                 tbb_pointer_d = tbb_pointer + 'b1;
-                            NumBatchesRecv_d = NumBatchesRecv + 'b1;
+                            NumBatchesRecv_d  = NumBatchesRecv + 'b1;
+                            pearray_busy_d[0] = 1'b1;
+                            status_updtd_d    = 1'b0;
                         end
                     end
                 end
@@ -472,7 +459,7 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                     end
                     //If tbb is not full, it can store a valid task
                     //Then, check if there is a valid task to process
-                    else if (NumBatchesRecv != cr_num_batches)
+                    else if (cr_request_pearray[1])
                     begin
                         //We have at least one available batch to process
                         //Then, check if the TBB is willing to read data
@@ -496,7 +483,9 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                                 tbb_pointer_d = 'b0;
                             else
                                 tbb_pointer_d = tbb_pointer + 'b1;
-                            NumBatchesRecv_d = NumBatchesRecv + 'b1;
+                            NumBatchesRecv_d  = NumBatchesRecv + 'b1;
+                            pearray_busy_d[1] = 1'b1;
+                            status_updtd_d    = 1'b0;
                         end
                     end
                 end
@@ -512,7 +501,7 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                     end
                     //If tbb is not full, it can store a valid task
                     //Then, check if there is a valid task to process
-                    else if (NumBatchesRecv != cr_num_batches)
+                    else if (cr_request_pearray[2])
                     begin
                         //We have at least one available batch to process
                         //Then, check if the TBB is willing to read data
@@ -536,7 +525,9 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                                 tbb_pointer_d = 'b0;
                             else
                                 tbb_pointer_d = tbb_pointer + 'b1;
-                            NumBatchesRecv_d = NumBatchesRecv + 'b1;
+                            NumBatchesRecv_d  = NumBatchesRecv + 'b1;
+                            pearray_busy_d[2] = 1'b1;
+                            status_updtd_d    = 1'b0;
                         end
                     end
                 end
@@ -552,7 +543,7 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                     end
                     //If tbb is not full, it can store a valid task
                     //Then, check if there is a valid task to process
-                    else if (NumBatchesRecv != cr_num_batches)
+                    else if (cr_request_pearray[3])
                     begin
                         //We have at least one available batch to process
                         //Then, check if the TBB is willing to read data
@@ -576,7 +567,9 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                                 tbb_pointer_d = 'b0;
                             else
                                 tbb_pointer_d = tbb_pointer + 'b1;
-                            NumBatchesRecv_d = NumBatchesRecv + 'b1;
+                            NumBatchesRecv_d  = NumBatchesRecv + 'b1;
+                            pearray_busy_d[3] = 1'b1;
+                            status_updtd_d    = 1'b0;
                         end
                     end
                 end
@@ -625,7 +618,9 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                         end
                     end
                     if (rbbTestCmp_b[0]) begin
-                        NumBatchesDone_d = NumBatchesDone + 'b1;
+                        NumBatchesDone_d  = NumBatchesDone + 'b1;
+                        pearray_busy_d[0] = 1'b0;
+                        status_updtd_d    = 1'b0;
                     end
                 end
                 'b1:
@@ -666,7 +661,9 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                         end
                     end
                     if (rbbTestCmp_b[1]) begin
-                        NumBatchesDone_d = NumBatchesDone + 'b1;
+                        NumBatchesDone_d  = NumBatchesDone + 'b1;
+                        pearray_busy_d[1] = 1'b0;
+                        status_updtd_d    = 1'b0;
                     end
                 end
                 'b10:
@@ -707,7 +704,9 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                         end
                     end
                     if (rbbTestCmp_b[2]) begin
-                        NumBatchesDone_d = NumBatchesDone + 'b1;
+                        NumBatchesDone_d  = NumBatchesDone + 'b1;
+                        pearray_busy_d[2] = 1'b0;
+                        status_updtd_d    = 1'b0;
                     end
                 end
                 'b11:
@@ -748,7 +747,9 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                         end
                     end
                     if (rbbTestCmp_b[3]) begin
-                        NumBatchesDone_d = NumBatchesDone + 'b1;
+                        NumBatchesDone_d  = NumBatchesDone + 'b1;
+                        pearray_busy_d[3] = 1'b0;
+                        status_updtd_d    = 1'b0;
                     end
                 end
             endcase
@@ -759,7 +760,7 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
     // Handle CCI Tx Channels
     //-------------------------
     // Format Read Header
-    wire [31:0]             RdAddr  = cr_src_address ^ {NumBatchesRecv[31-TBB_WR_ADDR_WIDTH:0], RdAddrOffset};
+    wire [31:0]             RdAddr  = cr_src_address ^ {NumBatchesRecv[1:0], RdAddrOffset};
     wire [TXHDR_WIDTH-1:0]  RdHdr   = {
                                         5'h00,                          // [60:56]      Byte Enable
                                         rdreq_type,                     // [55:52]      Request Type
@@ -769,7 +770,7 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                                       };
     
         // Format Write Header
-    wire [31:0]             WrAddr  = cr_dst_address ^ {NumBatchesDone[31-RBB_RD_ADDR_WIDTH:0], WrAddrOffset};
+    wire [31:0]             WrAddr  = cr_dst_address ^ {NumBatchesDone[1:0], WrAddrOffset};
     reg [DATA_WIDTH-1:0]   WrData;
     always @(*)
     begin
@@ -813,10 +814,8 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
             cf2ci_C1TxWrValid       <= 0;
             cf2ci_C0TxHdr           <= 0;
             cf2ci_C0TxRdValid       <= 0;
+            status_updtd            <= status_updtd_d;
 
-            if (bm_TestCmp) begin
-                status_updtd <= 'b0;
-            end
 
             // Channel 1
             if(ci2cf_C1TxAlmFull==0)
@@ -840,7 +839,7 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                 end
                 else if (re2xy_go)  //Executing real tasks
                 begin
-                    if(status_updtd==0) begin
+                    if(status_updtd == 0) begin
                         status_updtd       <= 1'b1;
                         cf2ci_C1TxWrValid  <= 1'b1;
                         // cf2ci_C1TxHdr      <= {
@@ -868,8 +867,8 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                                                     14'h3fff
                                                 };
                         cf2ci_C1TxData      <= {
-                                                    480'h0000,
-                                                    NumBatchesDone                  // Write NumBatchesDone to DSM for software polling
+                                                    508'h0000,
+                                                    pearray_busy                  // Write pearray status to DSM for software polling
                                                 };
                     end else if( WrHdr_valid )                                          // Write to Destination Workspace
                     begin                                                               //-------------------------------------
@@ -962,7 +961,7 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                 .clk            (clk),
                 .reset_n        (reset_n),
                 .task_start     (bm2pe_start_b[i]),
-                .task_done      (pe2bm_done_b[i]),
+                .task_done      (rbbTestCmp_b[i]),
                 .ReqValid       (tbbReqValid_b[i]),
                 .ReqLineIdx     (tbbReqLineIdx_b[i*TBB_WR_ADDR_WIDTH+TBB_WR_ADDR_WIDTH-1:i*TBB_WR_ADDR_WIDTH]),
                 .ReqAck         (tbbReqAck_b[i]),
@@ -1003,6 +1002,31 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                 .RdDout         (rbbRdDout_b[i*RBB_RD_DATA_WIDTH+RBB_RD_DATA_WIDTH-1:i*RBB_RD_DATA_WIDTH]),
                 .Empty          (rbbEmpty_b[i]),
                 .TestCmp        (rbbTestCmp_b[i])
+            ); 
+        end
+
+        //-------------------------
+        // PE_ARRAY Generation
+        //-------------------------
+
+        for (i = 0; i < NUM_PEA; i = i + 1) begin: PE_ARRAYS
+            sw_pe_array sw_pe_array(
+               .ap_clk            (clk),
+               .ap_rst            (~reset_n),
+               .ap_start          (bm2pe_start_b[i]),
+               .ap_done           (pe2bm_done_b[i]),
+               .ap_idle           (),
+               .ap_ready          (),
+               .ResData_we0       (rbbWrEn_b[i]),
+               .ResData_ce0       (),
+               .ResData_address0  (rbbWrAddr_b[i*RBB_WR_ADDR_WIDTH+RBB_WR_ADDR_WIDTH-1:i*RBB_WR_ADDR_WIDTH]),
+               .ResData_q0        (),
+               .ResData_d0        (rbbWrDin_b[i*RBB_WR_DATA_WIDTH+RBB_WR_DATA_WIDTH-1:i*RBB_WR_DATA_WIDTH]),
+               .InData_we0        (),
+               .InData_ce0        (),
+               .InData_address0   (tbbRdAddr_b[i*TBB_RD_ADDR_WIDTH+TBB_RD_ADDR_WIDTH-1:i*TBB_RD_ADDR_WIDTH]),
+               .InData_q0         (tbbRdDout_b[i*TBB_RD_DATA_WIDTH+TBB_RD_DATA_WIDTH-1:i*TBB_RD_DATA_WIDTH]),
+               .InData_d0         ()
             ); 
         end
     endgenerate
