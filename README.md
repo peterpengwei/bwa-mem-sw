@@ -71,6 +71,7 @@ Again, please change the AAL environment `AAL_SRC` `AAL_SDK` `AAL_RTL` `AAL_PAR`
 
 	csh
 	source set_env
+	setenv WORKDIR $PWD/fpga/IP
 
 Modify the script to create a new project for the synthesis.
 
@@ -120,4 +121,4 @@ Then we can launch the software host with `--target=Direct` for testing.
 ## Issues
 
 * Current 15 PEs per PE-array 4 PE-arrays (60 PEs in total) version still has timing violation. Could be solved with reduced PEs per PE-array (maybe 12 or 10).
-* Reprogramming of FPGA will cause core panic, so we either need to reboot the kernel after reprogramming or reprogram the FPGA immediately after a reboot (before OS acquires the device mapping). Please see Di, Young or Bug if you need help.
+* Reprogramming of FPGA will cause core panic, so we either we need to reboot the kernel after reprogramming or reprogram the FPGA immediately after a reboot (before OS acquires the device mapping). Please see Di, Young or Bug if you need help.
