@@ -1,6 +1,6 @@
 ## Introduction
 
-This package consists of the hardware implementation of BWA-MEM smith-waterman and the software BWA which links Intel AALSDK. Please make sure you have properly unpacked and compiled the AALSDK. The code has been tested against AALSDK 4.1.0.
+This package consists of the hardware implementation of BWA-MEM Smith-Waterman using an Altera FPGA and the software BWA which links Intel AALSDK. Please make sure you have properly unpacked and compiled the AALSDK. The code has been tested against AALSDK 4.1.0.
 
 ## Getting started
 
@@ -32,11 +32,11 @@ only the second argument `--target` is passed to the AAL host and the rest is fo
 *	`ASE` for simulation using ASE
 *	`Direct` for direct interaction with the FPGA
 
-No matter using which mode, the hardware end need to be running first as the software will try to detect the presence of hardware upon launching.
+No matter using which mode, the hardware end need to be launched first as the software will try to detect the presence of hardware upon running.
 
 ### Compile the hardware implementation (for simulation)
 
-In this step, we need to tell the ASE simulator the location of our RTL so that it can compile them into the simulation.
+In this step, we need to tell the ASE simulator the location of our RTL so that it can compile them into the simulator.
 
 First, go to the directory of your ASE.
 
@@ -51,20 +51,20 @@ Now the simulator is ready. Launch the hardware simulation by
 
 	make sim
 	
-The terminal that will be running the software need to set the ASE environment.
+Open another terminal and set the ASE environment for running the software with
+`--target=ASE`.
 
 	export ASE_WORKDIR=/path/to/ase
 
-The software need the flag `--target=ASE` in order to interact with the simulator. The ASE transaction history will be stored in **transaction.tsv** and the waveform is stored in **inter.vpd** in the ase directory.
+Once the simulation is terminated, the ASE transaction history will be stored in **transaction.tsv** and the waveform is stored in **inter.vpd** in the ase directory.
 
-### Synthesize the hardware implementation (for on-board test)
+### Synthesize the design and generate bitstream (for on-board test)
 
-This step needs to be performed on JC1 or other servers with Quartus installed.
-
+This step needs to be performed on JC1 or other servers with Altera Quartus installed.
 
 For synthesis, we use an afu template and redirect source files to our RTLs. You can either copy it from my directory (**/curr/haoyc/afu-quickassist/afu_template**) or ask from Prof. Lei.
 
-	cd afu_template
+	cd /path/to/afu_template
 	vi set_env
 	
 Again, please change the AAL environment `AAL_SRC` `AAL_SDK` `AAL_RTL` `AAL_PAR` and `LD_LIBRARY_PATH` accordingly.
@@ -78,9 +78,9 @@ Modify the script to create a new project for the synthesis.
 	cd fpga/build
 	vi run_ca.sh
 
-Make sure the `DEFAULT_PROJ_NAME` does conflict with any folder names within the same directory. 
+Make sure the `DEFAULT_PROJ_NAME` does not conflict with any folder names within the same directory, otherwise the synthesis can not proceed.
 	
-Next we need to link our RTLs. Please find the **afu_par_files.tcl** under the RTL folder, and change the directory to yours. Now back to the **afu_template/fpga/build** directory, we can start the synthesis.
+Next we need to link our RTLs. Please find the **afu_par_files.tcl** under the RTL folder, and within that file change the absolute directory of source codes to yours. Now back to the **afu_template/fpga/build** directory, we can start the synthesis.
 
 	./run_ca.sh -ccis_afu /path/to/rtl/afu_par_files.tcl
 	
