@@ -580,7 +580,7 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                     else
                     begin
                       //check if the RBB is willing to write data
-                        if (rbbReqValid_b[0] && !ci2cf_C1TxAlmFull) //Not empty, Request Valid and CCI not stalled, then just write back data
+                        if (rbbReqValid_b[0] && !ci2cf_C1TxAlmFull && status_updtd) //Not empty, Request Valid and CCI not stalled, then just write back data
                         begin
                             WrHdr_valid = 'b1; // a valid write request, 100% sent
                             WrAddrOffset_d = WrAddrOffset + 'b1; // update address since the current one has been sent
@@ -622,7 +622,7 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                     else
                     begin
                         //check if the RBB is willing to write data
-                        if (rbbReqValid_b[1] && !ci2cf_C1TxAlmFull) //Not empty, Request Valid and CCI not stalled, then just write back data
+                        if (rbbReqValid_b[1] && !ci2cf_C1TxAlmFull && status_updtd) //Not empty, Request Valid and CCI not stalled, then just write back data
                         begin
                             WrHdr_valid = 'b1; // a valid write request, 100% sent
                             WrAddrOffset_d = WrAddrOffset + 'b1; // update address since the current one has been sent
@@ -664,7 +664,7 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                     else
                     begin
                         //check if the RBB is willing to write data
-                        if (rbbReqValid_b[2] && !ci2cf_C1TxAlmFull) //Not empty, Request Valid and CCI not stalled, then just write back data
+                        if (rbbReqValid_b[2] && !ci2cf_C1TxAlmFull && status_updtd) //Not empty, Request Valid and CCI not stalled, then just write back data
                         begin
                             WrHdr_valid = 'b1; // a valid write request, 100% sent
                             WrAddrOffset_d = WrAddrOffset + 'b1; // update address since the current one has been sent
@@ -706,7 +706,7 @@ module batch_manager #(parameter    TBB_WR_ADDR_WIDTH=12,
                     else
                     begin
                         //check if the RBB is willing to write data
-                        if (rbbReqValid_b[3] && !ci2cf_C1TxAlmFull) //Not empty, Request Valid and CCI not stalled, then just write back data
+                        if (rbbReqValid_b[3] && !ci2cf_C1TxAlmFull && status_updtd) //Not empty, Request Valid and CCI not stalled, then just write back data
                         begin
                             WrHdr_valid = 'b1; // a valid write request, 100% sent
                             WrAddrOffset_d = WrAddrOffset + 'b1; // update address since the current one has been sent
