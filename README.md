@@ -105,14 +105,13 @@ Then we can use the programmer in Quartus to program the FPGA.
 
 Now log on to gene3 and install the CCI driver.
 
-	cd /INTEL_QAFPGA_Starter_Kit_4_1_0/aalsdk_splrm‐4.1.0/aalsdk_splrm‐4.1.0/
-	export DESTDIR=$PWD/myinstall
+	cd /INTEL_QAFPGA_Starter_Kit_4_1_0/aalsdk_splrm‐4.1.0/aalsdk_splrm‐4.1.0/mybuild/
 	sudo ./aalkernel/insdrv direct‐jkt
 
-Install the AAL driver.
+<!--Install the AAL driver.
 
 	export AAL_REGISTRAR_DATABASE_PATH=$PWD/myinstall/usr/local/share/aalsdk/RegistrarRepository/linux/
-	export LD_LIBRARY_PATH=$PWD/myinstall/usr/local/lib
+	export LD_LIBRARY_PATH=$PWD/myinstall/usr/local/lib-->
 
 Then we can launch the software host with `--target=Direct` for testing.
 
