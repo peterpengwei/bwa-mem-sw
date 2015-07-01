@@ -10,13 +10,13 @@ Checkout the github repo `bwa-mem-sw` for RTLs and `bwa-mem-quickassist` for the
 	git clone https://github.com/peterpengwei/bwa-mem-quickassist.git --brach smith-waterman
 
 ### Build the software host
-	
+
 Please change the `AAL_SRCDIR` and `AAL_BUILDDIR` in **bwa-mem-quickassist/bwa-0.7.8/Makefile** and point them to your own copy of AALSDK.
 
 	cd bwa-mem-quickassist/bwa-0.7.8/
 	make
-	
-This should build the software host for you. Next we need to change the script to run the program. 
+
+This should build the software host for you. Next we need to change the script to run the program.
 
 	cd ..
 	vi pipeline.sh
@@ -26,7 +26,7 @@ Please change `BWA` and `ODIR` to point to your executable and a writable direct
 Notice in the command in **pipeline.sh**
 
 	$BWA --target=ASE mem -t $NTHREAD -b $NBATCH_SIZE -Ma -R $HDR $FASTA $IN1
-	
+
 only the second argument `--target` is passed to the AAL host and the rest is for BWA. There are two options for it:
 
 *	`ASE` for simulation using ASE
@@ -50,7 +50,7 @@ Then use the python script to configure the environment, and compile.
 Now the simulator is ready. Launch the hardware simulation by
 
 	make sim
-	
+
 Open another terminal and set the ASE environment for running the software with
 `--target=ASE`.
 
@@ -66,7 +66,7 @@ For synthesis, we use an afu template and redirect source files to our RTLs. You
 
 	cd /path/to/afu_template
 	vi set_env
-	
+
 Again, please change the AAL environment `AAL_SRC` `AAL_SDK` `AAL_RTL` `AAL_PAR` and `LD_LIBRARY_PATH` accordingly.
 
 	csh
@@ -79,28 +79,28 @@ Modify the script to create a new project for the synthesis.
 	vi run_ca.sh
 
 Make sure the `DEFAULT_PROJ_NAME` does not conflict with any folder names within the same directory, otherwise the synthesis can not proceed.
-	
+
 Next we need to link our RTLs. Please find the **afu_par_files.tcl** under the RTL folder, and within that file change the absolute directory of source codes to yours. Now back to the **afu_template/fpga/build** directory, we can start the synthesis.
 
 	./run_ca.sh -ccis_afu /path/to/rtl/afu_par_files.tcl
-	
+
 The wait shall begin.
 
 ### Test using the Quickassist machine
 
-The test involves loading the bitstream onto the FPGA and running the software host on the same machine. 
+The test involves loading the bitstream onto the FPGA and running the software host on the same machine.
 
-Log on to JC1 with `ssh -X` as we need to start Quartus GUI. 
+Log on to JC1 with `ssh -X` as we need to start Quartus GUI.
 
 	cd /path/to/afu_template
 	csh
 	source set_env
-	
+
 Go to the project directory and launch Quartus.
 
 	cd fpga/build/your_project/your_project_seed0/
 	quartus *.qpf
-	
+
 Then we can use the programmer in Quartus to program the FPGA.
 
 Now log on to gene3 and install the CCI driver.
@@ -117,7 +117,5 @@ Then we can launch the software host with `--target=Direct` for testing.
 
 
 
-## Issues
-
-<!--* Current 15 PEs per PE-array 4 PE-arrays (60 PEs in total) version still has timing violation. Could be solved with reduced PEs per PE-array (maybe 12 or 10).-->
-* Reprogramming of FPGA will cause core panic, so we either we need to reboot the kernel after reprogramming or reprogram the FPGA immediately after a reboot (before OS acquires the device mapping). Please see Di, Young or Bug if you need help.
+<!-- ## Issues
+* Reprogramming of FPGA will cause core panic, so we either we need to reboot the kernel after reprogramming or reprogram the FPGA immediately after a reboot (before OS acquires the device mapping). Please see Di, Young or Bug if you need help. -->
